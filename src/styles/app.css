@@ -4,7 +4,7 @@
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar) 1fr;
-  min-height: 100%;
+  min-height: 100dvh;
 }
 
 /* ---------- Sidebar ---------- */
@@ -100,6 +100,8 @@
 .roles button {
   flex: 1;
   min-height: 34px;
+  white-space: nowrap;
+  padding: 0 var(--space-3);
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -292,7 +294,15 @@ tfoot td {
 .kpi .val {
   font: 700 clamp(1.35rem, 4.4vw, 1.9rem) / 1.1 var(--font-mono);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+/* Số rút gọn đọc nhanh, số đầy đủ ngay dưới để đối chiếu */
+.kpi .val-exact {
+  font: 500 var(--text-xs) var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+  white-space: nowrap;
 }
 
 .delta {
@@ -714,6 +724,11 @@ svg.bars rect.seg:hover {
   .erow {
     grid-template-columns: 1fr auto;
     row-gap: var(--space-2);
+  }
+
+  .erow .sku {
+    font-size: var(--text-xs);
+    white-space: nowrap;
   }
 
   .erow .price-f {

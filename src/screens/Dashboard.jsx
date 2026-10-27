@@ -40,10 +40,10 @@ export default function Dashboard({ range, setRange }) {
       </section>
 
       <div className="kpis">
-        <Kpi label="Doanh thu gộp" value={money(cur.gross)} rule="var(--accent)">
+        <Kpi label="Doanh thu gộp" value={compact(cur.gross)} exact={money(cur.gross)} rule="var(--accent)">
           <Delta now={cur.gross} before={old?.gross} />
         </Kpi>
-        <Kpi label="Doanh thu net" value={money(cur.net)} rule="var(--success)">
+        <Kpi label="Doanh thu net" value={compact(cur.net)} exact={money(cur.net)} rule="var(--success)">
           <Delta now={cur.net} before={old?.net} />
         </Kpi>
         <Kpi label="Margin" value={pct(cur.margin)} rule="var(--warning)">

@@ -26,7 +26,7 @@ export default function LockBook() {
           <span className="hint">Chốt rồi là chỉ đọc. Mở khóa được ghi vào audit log.</span>
         </header>
         <div className="cal">
-          {[...DATES].reverse().map((dk) => {
+          {[...DATES].slice(-30).reverse().map((dk) => {
             const lk = isLocked(dk)
             return (
               <div className={`day ${lk ? 'is-locked' : 'is-open'}`} key={dk}>

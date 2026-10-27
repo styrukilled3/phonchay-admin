@@ -61,11 +61,12 @@ export function Delta({ now, before, points = false }) {
   )
 }
 
-export function Kpi({ label, value, rule, children }) {
+export function Kpi({ label, value, exact, rule, children }) {
   return (
     <div className="kpi" style={{ '--kpi-rule': rule }}>
       <span className="lbl">{label}</span>
       <span className="val">{value}</span>
+      {exact && <span className="val-exact">{exact}</span>}
       {children}
     </div>
   )

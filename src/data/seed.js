@@ -61,7 +61,8 @@ function addDays(d, n) {
   return x
 }
 
-export const DAYS = 30
+// 60 ngày để dashboard so sánh được với kỳ trước (30 ngày này vs 30 ngày trước)
+export const DAYS = 60
 
 const TODAY = new Date()
 TODAY.setHours(0, 0, 0, 0)
