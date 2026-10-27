@@ -3,7 +3,7 @@ import { compact, pct } from '../lib/format.js'
 
 export default function Products() {
   return (
-    <section className="card reveal" style={{ '--i': 0 }}>
+    <section className="card">
       <header>
         <h2>Bảng giá SKU × kênh</h2>
         <span className="hint">

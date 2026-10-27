@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { CHANNELS, DATES, channel, PRODUCTS, priceOf, product } from '../data/seed.js'
 import { deaccent, dmy, money, pct } from '../lib/format.js'
-import { LockIcon, NumInput, StatusChip, Stamp, TrashIcon } from '../components/bits.jsx'
+import { LockIcon, NumInput, StatusChip, Tag, TrashIcon } from '../components/bits.jsx'
 
 export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, status, onSend, onSave, toast }) {
   const [query, setQuery] = useState('')
@@ -49,7 +49,7 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
 
   return (
     <>
-      <section className="card reveal" style={{ '--i': 0 }}>
+      <section className="card">
         <header>
           <h2>Ngày và kênh</h2>
           <StatusChip status={status} />
@@ -103,7 +103,7 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
       </section>
 
       {!locked && (
-        <section className="card card-finder reveal" style={{ '--i': 1 }}>
+        <section className="card card-finder">
           <header>
             <h2>Thêm dòng bán</h2>
             <span className="hint">Gõ mã, tên, màu hoặc size. Enter để thêm dòng đầu trong danh sách.</span>
@@ -155,12 +155,12 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
         </section>
       )}
 
-      <section className="card reveal" style={{ '--i': 2 }}>
+      <section className="card">
         <header>
           <h2>Dòng bán {dmy(date)}</h2>
-          <Stamp ch={chn}>
+          <Tag ch={chn}>
             {chn.id} · {chn.name}
-          </Stamp>
+          </Tag>
         </header>
 
         {rows.length === 0 ? (
@@ -229,9 +229,7 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
                       {off && (
                         <>
                           <br />
-                          <span className="stamp warn-stamp" style={{ '--ch': 'var(--warning)' }}>
-                            GIÁ LỆCH
-                          </span>
+                          <span className="flag">Giá lệch</span>
                         </>
                       )}
                     </div>

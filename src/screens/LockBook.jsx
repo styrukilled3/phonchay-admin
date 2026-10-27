@@ -20,7 +20,7 @@ const LOG = [
 export default function LockBook() {
   return (
     <>
-      <section className="card reveal" style={{ '--i': 0 }}>
+      <section className="card">
         <header>
           <h2>Trạng thái 30 ngày</h2>
           <span className="hint">Chốt rồi là chỉ đọc. Mở khóa được ghi vào audit log.</span>
@@ -39,7 +39,7 @@ export default function LockBook() {
         </div>
       </section>
 
-      <section className="card reveal" style={{ '--i': 1 }}>
+      <section className="card">
         <header>
           <h2>Audit log</h2>
           <span className="hint">Chỉ thêm, không sửa, không xóa.</span>

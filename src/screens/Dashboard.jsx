@@ -1,8 +1,8 @@
 import { CHANNELS, DATES, DAYS, LINES } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
-import { Delta, Kpi, Stamp } from '../components/bits.jsx'
-import { Sparkline, StackedBars } from '../components/Chart.jsx'
+import { Delta, Kpi, Tag } from '../components/bits.jsx'
+import { Sparkline, StackedArea } from '../components/Chart.jsx'
 
 export default function Dashboard({ range, setRange }) {
   const dates = DATES.slice(-range)
@@ -16,7 +16,7 @@ export default function Dashboard({ range, setRange }) {
 
   return (
     <>
-      <section className="card reveal" style={{ '--i': 0 }}>
+      <section className="card">
         <header>
           <h2>Khoảng thời gian</h2>
           <span className="hint">
@@ -32,7 +32,7 @@ export default function Dashboard({ range, setRange }) {
               style={{ '--ch': 'var(--accent)' }}
               onClick={() => setRange(n)}
             >
-              <span className="code">{n}D</span>
+              <span className="dot" />
               {n} ngày
             </button>
           ))}
@@ -40,38 +40,38 @@ export default function Dashboard({ range, setRange }) {
       </section>
 
       <div className="kpis">
-        <Kpi label="Doanh thu gộp" value={compact(cur.gross)} exact={money(cur.gross)} rule="var(--accent)">
+        <Kpi label="Doanh thu gộp" value={compact(cur.gross)} exact={money(cur.gross)} hero>
           <Delta now={cur.gross} before={old?.gross} />
         </Kpi>
-        <Kpi label="Doanh thu net" value={compact(cur.net)} exact={money(cur.net)} rule="var(--success)">
+        <Kpi label="Doanh thu net" value={compact(cur.net)} exact={money(cur.net)}>
           <Delta now={cur.net} before={old?.net} />
         </Kpi>
-        <Kpi label="Margin" value={pct(cur.margin)} rule="var(--warning)">
+        <Kpi label="Margin" value={pct(cur.margin)}>
           <Delta now={cur.margin} before={old?.margin} points />
         </Kpi>
-        <Kpi label="Sản phẩm bán" value={String(cur.qty)} rule="var(--ch-4)">
+        <Kpi label="Sản phẩm bán" value={String(cur.qty)}>
           <Delta now={cur.qty} before={old?.qty} />
         </Kpi>
       </div>
 
-      <section className="card reveal" style={{ '--i': 2 }}>
+      <section className="card">
         <div className="chart-head">
           <h2>Doanh thu gộp theo ngày và kênh</h2>
           <div className="legend">
             {CHANNELS.map((c) => (
-              <Stamp key={c.id} ch={c} />
+              <Tag key={c.id} ch={c} />
             ))}
           </div>
         </div>
         <div className="chart-wrap">
-          <StackedBars dates={dates} />
+          <StackedArea dates={dates} />
         </div>
         <p className="hint">
-          Cột chồng cộng lại là doanh thu gộp của ngày. Trỏ vào từng khối để xem số của kênh.
+          Các lớp chồng lên nhau, mép trên cùng là doanh thu gộp của ngày. Trỏ vào một ngày để xem tổng.
         </p>
       </section>
 
-      <section className="card reveal" style={{ '--i': 3 }}>
+      <section className="card">
         <header>
           <h2>So sánh 5 kênh</h2>
           <span className="hint">Xếp theo net. Margin thấp là kênh ăn phí nhiều.</span>
@@ -96,7 +96,7 @@ export default function Dashboard({ range, setRange }) {
               {rows.map((r) => (
                 <tr key={r.c.id}>
                   <td>
-                    <Stamp ch={r.c} /> {r.c.name}
+                    <Tag ch={r.c}>{r.c.id}</Tag> {r.c.name}
                   </td>
                   <td className="num">{compact(r.a.gross)}</td>
                   <td className="num">{r.a.discount ? `−${compact(r.a.discount)}` : '—'}</td>
@@ -108,7 +108,7 @@ export default function Dashboard({ range, setRange }) {
                   <td className="num">{compact(r.a.cogs)}</td>
                   <td
                     className="num"
-                    style={{ color: r.a.margin < 0.25 ? 'var(--danger)' : 'var(--success)' }}
+                    style={{ color: r.a.margin < 0.25 ? 'var(--down)' : 'var(--up)' }}
                   >
                     <b>{pct(r.a.margin)}</b>
                   </td>
@@ -140,7 +140,7 @@ export default function Dashboard({ range, setRange }) {
         </div>
       </section>
 
-      <section className="card reveal" style={{ '--i': 4 }}>
+      <section className="card">
         <header>
           <h2>Đọc nhanh</h2>
         </header>

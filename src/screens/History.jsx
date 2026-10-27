@@ -7,7 +7,7 @@ export default function History({ statusOf }) {
   const days = [...DATES].reverse().slice(0, 12)
 
   return (
-    <section className="card reveal" style={{ '--i': 0 }}>
+    <section className="card">
       <header>
         <h2>12 ngày gần nhất</h2>
         <span className="hint">Ngày đã chốt chỉ đọc.</span>

@@ -1,4 +1,4 @@
-/* Reset, chữ, và các control dùng lại khắp app */
+/* Reset, chữ, và control dùng lại khắp app. */
 
 *,
 *::before,
@@ -19,9 +19,10 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: var(--text-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
   line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -30,11 +31,9 @@ h1,
 h2,
 h3 {
   margin: 0;
-  font-family: var(--font-display);
-  font-weight: 800;
-  line-height: var(--leading-heading);
+  font-weight: 600;
+  line-height: 1.2;
   letter-spacing: -0.015em;
-  text-wrap: balance;
 }
 
 p {
@@ -43,6 +42,7 @@ p {
 
 button {
   font: inherit;
+  color: inherit;
 }
 
 :focus-visible {
@@ -50,18 +50,22 @@ button {
   outline-offset: 2px;
 }
 
+/* Nhãn nhỏ in hoa giãn chữ */
+.label {
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
 .num {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
-.mono {
-  font-family: var(--font-mono);
-}
-
 .muted {
-  color: var(--ink-muted);
+  color: var(--ink-2);
 }
 
 .small {
@@ -79,168 +83,159 @@ button {
   white-space: nowrap;
 }
 
-/* Nút */
+/* ---------- Nút ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: var(--touch-min);
-  padding: 0 var(--space-4);
+  min-height: var(--control-h);
+  padding: 0 var(--space-5);
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
+  background: var(--accent-grad);
+  color: var(--accent-ink);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-glow);
   transition:
-    background-color var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+    filter var(--dur-fast) linear,
+    box-shadow var(--dur-fast) linear;
 }
 
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
+.btn:hover:not(:disabled) {
+  filter: brightness(1.07);
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
-.btn-primary {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: oklch(0.38 0.045 265);
-}
-
 .btn-secondary {
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--ink);
-  border-color: var(--border-strong);
+  border-color: var(--line-strong);
+  box-shadow: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: var(--surface-3);
 }
 
-.btn-danger {
-  background: var(--danger);
-  color: var(--accent-ink);
-}
-
-/* Ô nhập: nhãn luôn hiện, lỗi ngay dưới ô */
+/* ---------- Ô nhập ---------- */
 .field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .field > label {
-  font-size: var(--text-sm);
+  font-size: var(--text-2xs);
   font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
 .input {
-  min-height: var(--touch-min);
   width: 100%;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border-strong);
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--ink);
-  font: 400 var(--text-md) var(--font-ui);
+  font: 500 var(--text-md) var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 
-.input.num {
-  font-family: var(--font-mono);
+.input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.input:focus-visible {
+  border-color: var(--accent);
 }
 
 .input[aria-invalid='true'] {
   border-color: var(--danger);
-  box-shadow: inset 0 0 0 1px var(--danger);
-}
-
-.field-err {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--danger);
-  font-size: var(--text-sm);
 }
 
 .icon-btn {
-  width: 36px;
-  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  color: var(--ink-muted);
+  width: 40px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink-3);
   cursor: pointer;
+  transition: color var(--dur-fast) linear;
 }
 
 .icon-btn:hover {
-  background: var(--surface-2);
   color: var(--danger);
   border-color: var(--danger);
 }
 
-/* Con dấu kênh: màu luôn đi kèm mã chữ */
-.stamp {
+/* ---------- Nhãn kênh và trạng thái ---------- */
+.tag {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 3px var(--space-2);
-  border: 1px solid color-mix(in oklch, var(--ch) 45%, var(--surface));
-  border-radius: var(--radius-stamp);
-  background: color-mix(in oklch, var(--ch) 12%, var(--surface));
-  font: 600 var(--text-xs) var(--font-mono);
-  letter-spacing: 0.08em;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--ch) 18%, var(--surface));
+  color: var(--ch);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.stamp .dot {
+.tag .sw {
   width: 8px;
   height: 8px;
-  border-radius: 2px;
+  border-radius: 50%;
   background: var(--ch);
 }
 
-.warn-stamp {
-  font-size: 10px;
-}
-
-/* Chip trạng thái */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 30px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
+  padding: 5px var(--space-3);
+  border: 1px solid var(--line);
   border-radius: var(--radius-pill);
-  background: var(--surface);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .chip-draft {
-  background: var(--surface-2);
-  color: var(--ink-muted);
+  color: var(--ink-2);
 }
 
 .chip-sent {
-  border-color: var(--accent);
+  border-color: color-mix(in oklch, var(--accent) 60%, transparent);
+  background: color-mix(in oklch, var(--accent) 16%, transparent);
   color: var(--accent);
 }
 
 .chip-locked {
-  border-color: var(--success);
-  color: var(--success);
+  border-color: color-mix(in oklch, var(--up) 55%, transparent);
+  background: color-mix(in oklch, var(--up) 15%, transparent);
+  color: var(--up);
 }
 
 @media (prefers-reduced-motion: reduce) {

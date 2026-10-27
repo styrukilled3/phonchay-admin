@@ -10,8 +10,6 @@
     "contrast": "python3 scripts/contrast.py"
   },
   "dependencies": {
-    "@fontsource-variable/bricolage-grotesque": "^5.0.0",
-    "@fontsource-variable/jetbrains-mono": "^5.0.0",
     "@fontsource/be-vietnam-pro": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

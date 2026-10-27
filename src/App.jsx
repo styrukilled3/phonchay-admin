@@ -25,9 +25,9 @@ const INITIAL_DRAFTS = {
   ],
 }
 
-function RoleSwitch({ role, setRole, bare }) {
+function RoleSwitch({ role, setRole }) {
   return (
-    <div className="roles" style={bare ? { background: 'var(--surface-2)' } : undefined}>
+    <div className="roles">
       {[
         ['staff', 'Nhân viên'],
         ['owner', 'Owner'],
@@ -87,8 +87,13 @@ export default function App() {
       <div className="shell">
         <aside className="side">
           <div className="brand">
-            <b>PHONCHAY</b>
-            <span>Admin nội bộ</span>
+            <span className="mark" aria-hidden="true">
+              PC
+            </span>
+            <span className="txt">
+              <b>PHONCHAY</b>
+              <span>Admin nội bộ</span>
+            </span>
           </div>
 
           <nav className="nav" aria-label="Điều hướng chính">
@@ -123,7 +128,7 @@ export default function App() {
               <h1>{active.title}</h1>
             </div>
             <div className="actions role-mobile">
-              <RoleSwitch role={role} setRole={setRole} bare />
+              <RoleSwitch role={role} setRole={setRole} />
             </div>
           </header>
 
