@@ -337,10 +337,11 @@ tfoot td {
   color: color-mix(in oklch, var(--accent-ink) 80%, transparent);
 }
 
-/* Số đầy đủ trên nền coral phải là màu đặc, pha trong suốt là mất đọc */
+/* Số đầy đủ trên nền coral phải là màu đặc: pha trong suốt hay opacity
+   đều trộn ngược vào nền và tụt tương phản xuống dưới ngưỡng đọc */
 .kpi-hero .val-exact {
   color: var(--accent-ink);
-  opacity: 0.85;
+  font-weight: 500;
 }
 
 .kpi .val {
