@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
-import { CHANNELS, DATES, channel, PRODUCTS, priceOf, product } from '../data/seed.js'
+import { DATES, channel, PRODUCTS, priceOf, product } from '../data/seed.js'
 import { deaccent, dmy, money, pct } from '../lib/format.js'
 import { LockIcon, NumInput, StatusChip, Tag, TrashIcon } from '../components/bits.jsx'
 
-export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, status, onSend, onSave, toast }) {
+export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast }) {
   const [query, setQuery] = useState('')
   const searchRef = useRef(null)
   const chn = channel(ch)
@@ -51,13 +51,13 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
     <>
       <section className="card">
         <header>
-          <h2>Ngày và kênh</h2>
+          <h2>Ngày bán</h2>
           <StatusChip status={status} />
         </header>
 
         <div className="pick-grid">
           <div className="field">
-            <label htmlFor="d">Ngày bán</label>
+            <label htmlFor="d">Chọn ngày</label>
             <input
               className="input num"
               type="date"
@@ -68,22 +68,6 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
               onChange={(e) => e.target.value && setDate(e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="tabs" role="group" aria-label="Chọn kênh bán">
-          {CHANNELS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-pressed={c.id === ch}
-              style={{ '--ch': `var(${c.v})` }}
-              onClick={() => setCh(c.id)}
-            >
-              <span className="dot" />
-              <span className="code">{c.id}</span>
-              {c.name}
-            </button>
-          ))}
         </div>
 
         {locked && (

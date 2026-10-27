@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CHANNELS, DATES, isLocked, priceOf } from './data/seed.js'
+import { CHANNELS, DATES, channel, isLocked, priceOf } from './data/seed.js'
 import { dmy } from './lib/format.js'
-import Entry from './screens/Entry.jsx'
+import Channels from './screens/Channels.jsx'
+import ChannelPage from './screens/ChannelPage.jsx'
 import History from './screens/History.jsx'
 import Dashboard from './screens/Dashboard.jsx'
 import Products from './screens/Products.jsx'
 import LockBook from './screens/LockBook.jsx'
 
 const SCREENS = [
-  { id: 'entry', key: '01', label: 'Nhập liệu', short: 'Nhập', title: 'Nhập doanh số', roles: ['staff', 'owner'] },
+  { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'Chọn kênh bán', roles: ['staff', 'owner'] },
   { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
   { id: 'dashboard', key: '03', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
   { id: 'products', key: '04', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
@@ -44,8 +45,8 @@ function RoleSwitch({ role, setRole }) {
 export default function App() {
   const [role, setRole] = useState('staff')
   const [screen, setScreen] = useState('entry')
+  const [openCh, setOpenCh] = useState(null)
   const [date, setDate] = useState(TODAY)
-  const [ch, setCh] = useState(FIRST_CH)
   const [range, setRange] = useState(30)
   const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
   const [sent, setSent] = useState({})
@@ -67,7 +68,7 @@ export default function App() {
     timer.current = setTimeout(() => setToastState(null), 4000)
   }, [])
 
-  const key = `${date}|${ch}`
+  const key = openCh ? `${date}|${openCh}` : ''
   const rows = drafts[key] ?? []
   const setRows = (next) => setDrafts((d) => ({ ...d, [key]: next }))
 
@@ -76,12 +77,22 @@ export default function App() {
     if (sent[`${dk}|${chId}`]) return 'sent'
     return 'draft'
   }
-  const status = statusOf(date, ch)
 
   function go(id) {
     setScreen(id)
+    setOpenCh(null)
     window.scrollTo({ top: 0 })
   }
+
+  function openChannel(id) {
+    setOpenCh(id)
+    window.scrollTo({ top: 0 })
+  }
+
+  const onChannelPage = active.id === 'entry' && openCh
+  const roleLabel = role === 'owner' ? 'Owner' : 'Nhân viên'
+  const title = onChannelPage ? channel(openCh).name : active.title
+  const crumb = onChannelPage ? `${roleLabel} · Kênh bán` : `${roleLabel} · ${active.label}`
 
   return (
     <>
@@ -123,10 +134,8 @@ export default function App() {
         <div className="main">
           <header className="topbar">
             <div>
-              <p className="crumb">
-                {role === 'owner' ? 'Owner' : 'Nhân viên'} · {active.label}
-              </p>
-              <h1>{active.title}</h1>
+              <p className="crumb">{crumb}</p>
+              <h1>{title}</h1>
             </div>
             <div className="actions role-mobile">
               <RoleSwitch role={role} setRole={setRole} />
@@ -134,24 +143,27 @@ export default function App() {
           </header>
 
           <main className="view">
-            {active.id === 'entry' && (
-              <Entry
-                role={role}
-                date={date}
-                setDate={setDate}
-                ch={ch}
-                setCh={setCh}
-                rows={rows}
-                setRows={setRows}
-                status={status}
-                toast={toast}
-                onSend={() => {
-                  setSent((s) => ({ ...s, [key]: true }))
-                  toast(`Đã gửi ngày ${dmy(date)} · ${ch} cho owner.`)
-                }}
-                onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${ch}.`)}
-              />
-            )}
+            {active.id === 'entry' &&
+              (openCh ? (
+                <ChannelPage
+                  ch={openCh}
+                  role={role}
+                  onBack={() => setOpenCh(null)}
+                  date={date}
+                  setDate={setDate}
+                  rows={rows}
+                  setRows={setRows}
+                  status={statusOf(date, openCh)}
+                  toast={toast}
+                  onSend={() => {
+                    setSent((s) => ({ ...s, [key]: true }))
+                    toast(`Đã gửi ngày ${dmy(date)} · ${channel(openCh).name} cho owner.`)
+                  }}
+                  onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
+                />
+              ) : (
+                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} />
+              ))}
             {active.id === 'history' && <History statusOf={statusOf} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
             {active.id === 'products' && <Products />}

@@ -138,6 +138,74 @@ export function StackedArea({ dates }) {
   )
 }
 
+/* Biểu đồ vùng một chuỗi: dùng cho page riêng của từng kênh */
+export function AreaOne({ dates, series, color }) {
+  const W = 640
+  const H = 200
+  const ml = 52
+  const mr = 12
+  const mt = 16
+  const mb = 30
+  const pw = W - ml - mr
+  const ph = H - mt - mb
+
+  const max = niceMax(Math.max(...series, 1))
+  const x = (i) => ml + (dates.length > 1 ? (i * pw) / (dates.length - 1) : pw / 2)
+  const y = (v) => mt + ph - (v / max) * ph
+  const pts = series.map((v, i) => [x(i), y(v)])
+  const line = smooth(pts, mt, mt + ph)
+  const base = `L ${x(dates.length - 1).toFixed(1)} ${(mt + ph).toFixed(1)} L ${ml.toFixed(1)} ${(mt + ph).toFixed(1)} Z`
+  const ticks = [0, 1, 2].map((t) => (max * t) / 2)
+  const last = pts[pts.length - 1]
+
+  return (
+    <svg className="area" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Doanh thu gộp theo ngày của kênh">
+      <defs>
+        <linearGradient id="g-one" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.5" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.04" />
+        </linearGradient>
+      </defs>
+
+      {ticks.map((v) => (
+        <g key={v}>
+          <line
+            x1={ml}
+            y1={y(v).toFixed(1)}
+            x2={W - mr}
+            y2={y(v).toFixed(1)}
+            stroke="var(--line)"
+            strokeDasharray={v === 0 ? '0' : '2 6'}
+          />
+          <text x={ml - 10} y={(y(v) + 4).toFixed(1)} textAnchor="end" fontSize="10" fill="var(--ink-3)">
+            {compact(v)}
+          </text>
+        </g>
+      ))}
+
+      <path d={`${line} ${base}`} fill="url(#g-one)" />
+      <path d={line} fill="none" stroke={color} strokeWidth="2" />
+      <circle cx={last[0].toFixed(1)} cy={last[1].toFixed(1)} r="4" fill={color} />
+
+      {dates.map((dk, i) => {
+        const show = i % 6 === 0 || i === dates.length - 1
+        return (
+          <g key={dk}>
+            <rect x={x(i) - pw / dates.length / 2} y={mt} width={pw / dates.length} height={ph} fill="transparent">
+              <title>{`${dmy(dk)}: ${money(series[i])}`}</title>
+            </rect>
+            {show && (
+              <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="10" fill="var(--ink-3)">
+                {dm(dk)}
+              </text>
+            )}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 export function Sparkline({ series, color }) {
   const W = 88
   const H = 26
