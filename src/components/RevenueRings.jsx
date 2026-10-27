@@ -14,7 +14,8 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
 export default function RevenueRings({ rings, total, center }) {
   const wrap = useRef(null)
   const raf = useRef(0)
-  const shown = useRef({ pcts: rings.map(() => 0), total: 0 })
+  const shown = useRef({ pcts: rings.map(() => 0), total: 0, t: 0 })
+  const last = useRef(0)
   const latest = useRef({ rings, total })
   latest.current = { rings, total }
   const [, force] = useState(0)
@@ -32,13 +33,21 @@ export default function RevenueRings({ rings, total, center }) {
       return Math.min(easeOutCubic(tIn), tOut)
     }
 
-    function frame() {
+    function frame(now) {
       const { rings: rs, total: tot } = latest.current
       const t = reduce ? 1 : scrollT()
       const s = shown.current
+      // Lerp theo thời gian (không theo frame): hằng số 650ms cho cảm giác chậm, mượt
+      const dtms = last.current ? Math.min(64, now - last.current) : 16
+      last.current = now
+      const k = reduce ? 1 : 1 - Math.exp(-dtms / 650)
       while (s.pcts.length < rs.length) s.pcts.push(0)
       let moving = false
-      const k = reduce ? 1 : 0.16
+      const dT = t - s.t
+      if (Math.abs(dT) > 0.0005) {
+        s.t += dT * k
+        moving = true
+      } else s.t = t
       rs.forEach((r, i) => {
         const target = clamp01(r.pct) * t
         const d = target - s.pcts[i]
@@ -54,6 +63,7 @@ export default function RevenueRings({ rings, total, center }) {
         moving = true
       } else s.total = tt
       force((n) => n + 1)
+      if (!moving) last.current = 0
       raf.current = moving ? requestAnimationFrame(frame) : 0
     }
 
@@ -77,7 +87,17 @@ export default function RevenueRings({ rings, total, center }) {
   }, [rings, total])
 
   return (
-    <div className="rings" ref={wrap} role="img" aria-label="Doanh thu từng kênh, vòng ngoài là kênh bán nhiều nhất">
+    <div
+      className="rings"
+      ref={wrap}
+      role="img"
+      aria-label="Doanh thu từng kênh, vòng ngoài là kênh bán nhiều nhất"
+      style={{
+        // Blur-in gắn với tiến độ cuộn: càng ít vòng càng mờ
+        filter: shown.current.t < 0.999 ? `blur(${((1 - shown.current.t) * 9).toFixed(2)}px)` : 'none',
+        opacity: 0.25 + 0.75 * shown.current.t,
+      }}
+    >
       {rings.map((r, i) => {
         const p = shown.current.pcts[i] ?? 0
         const inset = ((i * (STROKE + GAP) + 3) / SIZE) * 100
