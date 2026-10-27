@@ -1,0 +1,45 @@
+name: preview
+
+# Build rồi đẩy nguyên thư mục dist sang nhánh `preview`.
+# Nhánh đó mở trực tiếp được qua CDN, không cần bật GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Push dist to preview branch
+        run: |
+          cd dist
+          touch .nojekyll
+          git init -q
+          git checkout -q -b preview
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "preview build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" preview
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
