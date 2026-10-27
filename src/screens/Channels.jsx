@@ -1,15 +1,18 @@
+import { useState } from 'react'
 import { CHANNELS, DATES } from '../data/seed.js'
 import { agg, aggOf, linesIn } from '../lib/calc.js'
 import { compact, dmy, money } from '../lib/format.js'
 import { Sparkline } from '../components/Chart.jsx'
-import { StatusChip } from '../components/bits.jsx'
+import { NumInput, StatusChip } from '../components/bits.jsx'
+import RevenueRings from '../components/RevenueRings.jsx'
 import CountUp from '../components/CountUp.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { chUnits } from '../lib/stock.js'
 
-const TREND_DAYS = 14
 
-export default function Channels({ role, date, statusOf, onOpen, stock }) {
+export default function Channels({ role, date, statusOf, onOpen, stock, targets, setTargets }) {
+  const [range, setRange] = useState(14)
+  const TREND_DAYS = range
   const trend = DATES.slice(-TREND_DAYS)
 
   // Xếp theo doanh thu gộp 14 ngày: kênh mạnh nhất lên box đầu
@@ -21,6 +24,13 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
   })).sort((a, b) => b.period.gross - a.period.gross)
 
   const sum = agg(linesIn(trend))
+  // Mục tiêu theo tháng quy ra đúng số ngày đang xem
+  const rings = rows.map((r) => {
+    const goal = (targets[r.c.id] * TREND_DAYS) / 30
+    return { id: r.c.id, v: r.c.v, name: r.c.name, gross: r.period.gross, pct: r.period.gross / goal }
+  })
+  const overall =
+    sum.gross / (CHANNELS.reduce((a, c) => a + targets[c.id], 0) * (TREND_DAYS / 30))
   const sumToday = agg(linesIn([date]))
 
   return (
@@ -30,22 +40,64 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
         <span className="hint">Doanh thu là {TREND_DAYS} ngày gần nhất, tồn kho là tồn của kênh. Ngày đang mở: {dmy(date)}.</span>
       </div>
 
-      <Reveal className="all-total">
-        <div>
-          <span className="k">Tổng doanh thu mọi kênh · {TREND_DAYS} ngày</span>
-          <span className="v"><CountUp value={sum.gross} format={compact} /></span>
-          <span className="sub">{money(sum.gross)}</span>
+      <Reveal className="rev-hero">
+        <div className="rev-info">
+          <span className="rev-k">Tổng doanh thu mọi kênh · {TREND_DAYS} ngày</span>
+          <span className="rev-big">
+            <CountUp value={sum.gross} format={compact} />
+          </span>
+          <span className="rev-sub">
+            {money(sum.gross)} · {sum.qty} sp bán · hôm nay {compact(sumToday.gross)}
+          </span>
+
+          <div className="tabs rev-tabs" role="group" aria-label="Khoảng thời gian">
+            {[7, 14, 30].map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={range === n}
+                style={{ '--ch': 'var(--accent)' }}
+                onClick={() => setRange(n)}
+              >
+                <span className="dot" />
+                {n} ngày
+              </button>
+            ))}
+          </div>
+
+          <ul className="rev-legend">
+            {rings.map((r) => (
+              <li key={r.id} style={{ '--ch': `var(${r.v})` }}>
+                <span className="sw" />
+                <span className="nm">{r.name}</span>
+                <span className="amt">{compact(r.gross)}</span>
+                <span className="pc">{Math.round(r.pct * 100)}%</span>
+                {role === 'owner' && (
+                  <label className="tg">
+                    <span className="sr">Mục tiêu tháng kênh {r.name}, đơn vị triệu</span>
+                    <NumInput
+                      className="input"
+                      value={Math.round(targets[r.id] / 1e6)}
+                      onCommit={(n) => setTargets((t) => ({ ...t, [r.id]: Math.max(1, n) * 1e6 }))}
+                    />
+                    <span aria-hidden="true">tr</span>
+                  </label>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="rev-note">
+            Vòng là phần trăm so với mục tiêu tháng của kênh{role === 'owner' ? ', sửa số ở cột cuối' : ''}.
+          </p>
         </div>
-        <div>
-          <span className="k">Hôm nay {dmy(date)}</span>
-          <span className="v"><CountUp value={sumToday.gross} format={compact} /></span>
-          <span className="sub">{sumToday.qty} sp bán</span>
-        </div>
-        <div>
-          <span className="k">Số lượng bán {TREND_DAYS} ngày</span>
-          <span className="v"><CountUp value={sum.qty} /></span>
-          <span className="sub">{CHANNELS.length} kênh</span>
-        </div>
+
+        <RevenueRings rings={rings}>
+          <span className="k">Tổng</span>
+          <b>
+            <CountUp value={sum.gross} format={compact} />
+          </b>
+          <span className="s">{Math.round(overall * 100)}% mục tiêu</span>
+        </RevenueRings>
       </Reveal>
 
       <div className="ch-boxes">

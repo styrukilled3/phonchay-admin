@@ -2076,3 +2076,183 @@ svg.area {
     height: 24px;
   }
 }
+
+/* ---------- Khối tổng doanh thu nổi bật + vòng đồng tâm ---------- */
+.rev-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--line));
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in oklch, var(--accent) 22%, transparent) 0%, transparent 60%),
+    var(--surface);
+  box-shadow: var(--shadow-glow);
+}
+
+.rev-info {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.rev-k {
+  font-size: var(--text-xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.rev-big {
+  font-size: clamp(2.75rem, 7vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.rev-sub {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.rev-tabs {
+  margin-block: var(--space-2);
+}
+
+.rev-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rev-legend li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto 48px auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.rev-legend .sw {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ch);
+}
+
+.rev-legend .nm {
+  font-weight: 600;
+  color: var(--ch);
+}
+
+.rev-legend .amt,
+.rev-legend .pc {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rev-legend .pc {
+  color: var(--ink-2);
+}
+
+.rev-legend .tg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+
+.rev-legend .tg .input {
+  width: 64px;
+  min-height: 34px;
+  padding: 0 var(--space-2);
+  text-align: right;
+  font-size: var(--text-sm);
+}
+
+.rev-note {
+  font-size: var(--text-2xs);
+  color: var(--ink-3);
+}
+
+.rings {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  justify-self: center;
+  aspect-ratio: 1;
+}
+
+.rings svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ring-track {
+  stroke: color-mix(in oklch, var(--ch) 18%, var(--surface-2));
+}
+
+.ring-val {
+  stroke: var(--ch);
+  transition: stroke-dashoffset 1100ms var(--ease-out);
+  filter: drop-shadow(0 0 5px color-mix(in oklch, var(--ch) 50%, transparent));
+}
+
+.ring-cap {
+  transition: transform 1100ms var(--ease-out);
+}
+
+.rings-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.rings-center .k {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.rings-center b {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.rings-center .s {
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+}
+
+@media (max-width: 860px) {
+  .rev-hero {
+    grid-template-columns: 1fr;
+    padding: var(--space-5) var(--space-4);
+    gap: var(--space-5);
+  }
+
+  .rings {
+    order: -1;
+    max-width: 280px;
+  }
+
+  .rev-legend li {
+    grid-template-columns: 12px minmax(0, 1fr) auto 44px;
+  }
+
+  .rev-legend .tg {
+    grid-column: 2 / -1;
+  }
+}

@@ -216,3 +216,8 @@ export function setDayLines(date, chId, rows) {
     })
   })
 }
+
+// Mục tiêu doanh thu gộp theo tháng (30 ngày) của từng kênh, số mẫu. Owner sửa được trên màn Kênh bán.
+export function initialTargets() {
+  return { '808': 120e6, SHP: 100e6, TLD: 70e6, HP: 55e6, SPF: 45e6 }
+}
