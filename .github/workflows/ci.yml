@@ -6,7 +6,35 @@ on:
   pull_request:
 
 jobs:
-  smoke:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "actions ok"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Contrast check
+        shell: bash
+        run: python3 scripts/contrast.py 2>&1 | tee contrast.log
+
+      - name: Install
+        shell: bash
+        run: npm install 2>&1 | tee install.log
+
+      - name: Build
+        shell: bash
+        run: npm run build 2>&1 | tee build.log
+
+      # Log chi tiết không tải được từ bên ngoài, nên in phần cuối thành annotation
+      - name: Annotate failure
+        if: failure()
+        shell: bash
+        run: |
+          for f in contrast.log install.log build.log; do
+            if [ -f "$f" ]; then
+              msg=$(tail -n 40 "$f" | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+              echo "::error title=$f::$msg"
+            fi
+          done

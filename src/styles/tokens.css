@@ -1,0 +1,71 @@
+/* Design tokens PHONCHAY Admin. Nguồn chuẩn: doc "PHONCHAY Admin - Spec thiết kế".
+   Đổi giá trị ở đây, không dùng hex thô trong component.
+   Chạy `npm run contrast` sau khi đổi màu. */
+:root {
+  /* Màu nền và chữ */
+  --bg: oklch(0.975 0.008 85);
+  --surface: oklch(0.995 0.004 85);
+  --surface-2: oklch(0.955 0.01 85);
+  --border: oklch(0.88 0.012 80);
+  --border-strong: oklch(0.62 0.015 80);
+  --ink: oklch(0.22 0.015 60);
+  --ink-muted: oklch(0.45 0.015 60);
+
+  /* Accent (placeholder chờ brand color PHONCHAY) */
+  --accent: oklch(0.3 0.04 265);
+  --accent-ink: oklch(1 0 0);
+  --focus: var(--accent);
+
+  /* Trạng thái */
+  --success: oklch(0.5 0.12 155);
+  --warning: oklch(0.78 0.15 80);
+  --danger: oklch(0.5 0.19 25);
+
+  /* 5 kênh bán: cùng độ sáng và bão hòa, luôn đi kèm mã chữ */
+  --ch-1: oklch(0.6 0.13 255);
+  --ch-2: oklch(0.6 0.13 160);
+  --ch-3: oklch(0.6 0.13 60);
+  --ch-4: oklch(0.6 0.13 330);
+  --ch-5: oklch(0.6 0.13 205);
+
+  /* Font */
+  --font-display: 'Bricolage Grotesque Variable', 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-ui: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Thang cỡ chữ: 12 / 14 / 16 / 20 / 24 / 32 / 40 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-kpi: 2.5rem;
+  --leading-body: 1.5;
+  --leading-heading: 1.25;
+  --leading-kpi: 1.1;
+
+  /* Spacing bội số 4 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Hình khối */
+  --radius-control: 6px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --shadow-pop: 0 8px 24px oklch(0.22 0.015 60 / 0.14);
+  --touch-min: 44px;
+  --row-mobile: 56px;
+  --row-desktop: 40px;
+
+  /* Chuyển động */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-drawer: 240ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
