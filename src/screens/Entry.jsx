@@ -103,7 +103,7 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
       </section>
 
       {!locked && (
-        <section className="card reveal" style={{ '--i': 1 }}>
+        <section className="card card-finder reveal" style={{ '--i': 1 }}>
           <header>
             <h2>Thêm dòng bán</h2>
             <span className="hint">Gõ mã, tên, màu hoặc size. Enter để thêm dòng đầu trong danh sách.</span>

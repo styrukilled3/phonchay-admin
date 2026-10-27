@@ -398,6 +398,13 @@ svg.bars rect.seg:hover {
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--ch) 35%, var(--surface));
 }
 
+/* .reveal tạo stacking context riêng, nên card chứa dropdown phải tự nâng lên
+   mới nằm trên các card sau nó */
+.card-finder {
+  position: relative;
+  z-index: 3;
+}
+
 .finder {
   position: relative;
 }
