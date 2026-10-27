@@ -6,34 +6,84 @@ const STROKE = 17
 const GAP = 7
 const R0 = C - STROKE / 2 - 4
 
-/* Vòng đồng tâm: mỗi kênh một vòng theo màu kênh, độ dài = doanh thu / mục tiêu (kẹp 100% khi vẽ).
-   Vòng chạy từ 0 tới giá trị khi cuộn tới, đổi khoảng ngày thì chạy từ vị trí cũ sang vị trí mới. */
-export default function RevenueRings({ rings, children }) {
-  const ref = useRef(null)
-  const [on, setOn] = useState(() => typeof IntersectionObserver === 'undefined')
+const clamp01 = (x) => Math.min(1, Math.max(0, x))
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
+
+/* Vòng đồng tâm chạy theo cuộn trang (scrub): mỗi kênh một vòng theo màu kênh, độ dài = doanh thu / mục tiêu.
+   Cuộn xuống thì vòng thu dần khi biểu đồ trôi khỏi màn hình, cuộn lên thì vòng đầy lại; vào màn hình từ dưới lên
+   cũng vẽ dần. Giá trị hiển thị lerp theo mục tiêu nên không giật, đổi khoảng ngày cũng chạy mượt.
+   `center(shownTotal)` vẽ số ở giữa theo cùng tiến độ. */
+export default function RevenueRings({ rings, total, center }) {
+  const wrap = useRef(null)
+  const raf = useRef(0)
+  const shown = useRef({ pcts: rings.map(() => 0), total: 0 })
+  const latest = useRef({ rings, total })
+  latest.current = { rings, total }
+  const [, force] = useState(0)
 
   useEffect(() => {
-    if (on) return
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setOn(true)
-          io.disconnect()
-        }
-      },
-      { threshold: 0.3 },
-    )
-    io.observe(ref.current)
-    return () => io.disconnect()
-  }, [on])
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+    // Tiến độ theo vị trí cuộn: 0 khi vừa lọt mép dưới, 1 khi nằm giữa màn hình, về 0 khi trôi ra mép trên
+    function scrollT() {
+      const r = wrap.current.getBoundingClientRect()
+      const vh = window.innerHeight
+      const tIn = clamp01((vh * 0.95 - r.top) / (vh * 0.55))
+      const tOut = clamp01((r.bottom - 48) / (r.height * 0.75))
+      return easeOutCubic(Math.min(tIn, tOut))
+    }
+
+    function frame() {
+      const { rings: rs, total: tot } = latest.current
+      const t = reduce ? 1 : scrollT()
+      const s = shown.current
+      while (s.pcts.length < rs.length) s.pcts.push(0)
+      let moving = false
+      const k = reduce ? 1 : 0.16
+      rs.forEach((r, i) => {
+        const target = clamp01(r.pct) * t
+        const d = target - s.pcts[i]
+        if (Math.abs(d) > 0.0004) {
+          s.pcts[i] += d * k
+          moving = true
+        } else s.pcts[i] = target
+      })
+      const tt = tot * t
+      const dt = tt - s.total
+      if (Math.abs(dt) > Math.max(1, tot * 0.0004)) {
+        s.total += dt * k
+        moving = true
+      } else s.total = tt
+      force((n) => n + 1)
+      raf.current = moving ? requestAnimationFrame(frame) : 0
+    }
+
+    const kick = () => {
+      if (!raf.current) raf.current = requestAnimationFrame(frame)
+    }
+    kick()
+    window.addEventListener('scroll', kick, { passive: true })
+    window.addEventListener('resize', kick)
+    return () => {
+      window.removeEventListener('scroll', kick)
+      window.removeEventListener('resize', kick)
+      cancelAnimationFrame(raf.current)
+      raf.current = 0
+    }
+  }, [])
+
+  // Đổi dữ liệu (khoảng ngày, mục tiêu) thì đánh thức vòng lặp
+  useEffect(() => {
+    if (!raf.current) raf.current = requestAnimationFrame(() => window.dispatchEvent(new Event('scroll')))
+  }, [rings, total])
 
   return (
-    <div className="rings" ref={ref}>
+    <div className="rings" ref={wrap}>
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Doanh thu từng kênh so với mục tiêu">
         {rings.map((r, i) => {
           const radius = R0 - i * (STROKE + GAP)
           const len = 2 * Math.PI * radius
-          const p = on ? Math.min(1, Math.max(0, r.pct)) : 0
+          const p = shown.current.pcts[i] ?? 0
           return (
             <g key={r.id} style={{ '--ch': `var(${r.v})` }}>
               <circle className="ring-track" cx={C} cy={C} r={radius} strokeWidth={STROKE} fill="none" />
@@ -48,15 +98,16 @@ export default function RevenueRings({ rings, children }) {
                 strokeDasharray={len}
                 strokeDashoffset={len * (1 - p)}
                 transform={`rotate(-90 ${C} ${C})`}
+                opacity={p > 0.002 ? 1 : 0}
               />
-              <g className="ring-cap" style={{ transform: `rotate(${p * 360}deg)`, transformOrigin: `${C}px ${C}px` }}>
+              <g transform={`rotate(${p * 360} ${C} ${C})`} opacity={p > 0.002 ? 1 : 0}>
                 <circle cx={C} cy={C - radius} r={3.2} fill="var(--ink)" />
               </g>
             </g>
           )
         })}
       </svg>
-      <div className="rings-center">{children}</div>
+      <div className="rings-center">{center(shown.current.total)}</div>
     </div>
   )
 }

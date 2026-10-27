@@ -91,13 +91,17 @@ export default function Channels({ role, date, statusOf, onOpen, stock, targets,
           </p>
         </div>
 
-        <RevenueRings rings={rings}>
-          <span className="k">Tổng</span>
-          <b>
-            <CountUp value={sum.gross} format={compact} />
-          </b>
-          <span className="s">{Math.round(overall * 100)}% mục tiêu</span>
-        </RevenueRings>
+        <RevenueRings
+          rings={rings}
+          total={sum.gross}
+          center={(v) => (
+            <>
+              <span className="k">Tổng</span>
+              <b>{compact(v)}</b>
+              <span className="s">{Math.round((overall * v) / (sum.gross || 1) * 100)}% mục tiêu</span>
+            </>
+          )}
+        />
       </Reveal>
 
       <div className="ch-boxes">

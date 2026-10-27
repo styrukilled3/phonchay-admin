@@ -2201,12 +2201,7 @@ svg.area {
 
 .ring-val {
   stroke: var(--ch);
-  transition: stroke-dashoffset 1100ms var(--ease-out);
   filter: drop-shadow(0 0 5px color-mix(in oklch, var(--ch) 50%, transparent));
-}
-
-.ring-cap {
-  transition: transform 1100ms var(--ease-out);
 }
 
 .rings-center {
