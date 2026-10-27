@@ -208,6 +208,7 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }
 
+  const roleLabel = role === 'owner' ? 'Owner' : 'Nhân viên'
   const onChannelPage = active.id === 'entry' && openCh && sub !== 'request'
   const onRequest = active.id === 'entry' && openCh && sub === 'request'
   const inWh = active.id === 'warehouse' ? sub : null
