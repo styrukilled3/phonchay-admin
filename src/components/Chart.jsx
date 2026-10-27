@@ -127,10 +127,10 @@ export function StackedArea({ dates }) {
               <title>{`${dmy(d.dk)} · tổng ${money(totals[i])}`}</title>
             </rect>
             {show && (
-              {/* Nhãn hai đầu neo vào trong, không thì bị cắt ngoài viewBox */}
               <text
                 x={x(i)}
                 y={H - 12}
+                // Nhãn hai đầu neo vào trong, không thì bị cắt ngoài viewBox
                 textAnchor={i === 0 ? 'start' : i === perDay.length - 1 ? 'end' : 'middle'}
                 fontSize="10"
                 fill="var(--ink-3)"
