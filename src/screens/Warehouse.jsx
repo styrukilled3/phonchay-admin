@@ -5,6 +5,7 @@ import { Tag } from '../components/bits.jsx'
 import CountUp from '../components/CountUp.jsx'
 import Reveal from '../components/Reveal.jsx'
 
+const STATUS = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' }
 const nf = (n) => Math.round(n).toLocaleString('vi-VN')
 
 function Badge({ status }) {
@@ -13,7 +14,8 @@ function Badge({ status }) {
   return null
 }
 
-export default function Warehouse({ wh, stock, requests, onRestock, onNewProduct, onApprove, onReject }) {
+export default function Warehouse({ role, wh, stock, requests, onRestock, onNewProduct, onApprove, onReject, onRequest }) {
+  const owner = role === 'owner'
   const st = stockStats(wh)
   const pending = requests.filter((r) => r.status === 'pending')
 
@@ -38,6 +40,41 @@ export default function Warehouse({ wh, stock, requests, onRestock, onNewProduct
         </div>
       </Reveal>
 
+      {!owner && (
+        <>
+          <div className="zone-actions zone-ch">
+            {CHANNELS.map((c) => (
+              <Reveal as="button" type="button" className="act-box" key={c.id} onClick={() => onRequest(c.id)}>
+                <span className="act-plus" aria-hidden="true">+</span>
+                <span className="act-txt">
+                  <b>Lấy hàng cho {c.name}</b>
+                  <span>Gửi yêu cầu, owner duyệt thì vào tồn kênh</span>
+                </span>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal as="section" className="card">
+            <header>
+              <h2>Yêu cầu đã gửi</h2>
+            </header>
+            {requests.length === 0 && <p className="hint">Chưa có yêu cầu nào.</p>}
+            <ul className="rs-hist rq-hist">
+              {requests.map((r) => (
+                <li key={r.id}>
+                  <b>{r.id} · {channel(r.ch).name}</b>
+                  <span>{dmy(r.date)}</span>
+                  <span>{r.lines.reduce((n, l) => n + l.qty, 0)} sp</span>
+                  <span className={`rq-st is-${r.status}`}>{STATUS[r.status]}</span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </>
+      )}
+
+      {owner && (
+        <>
       <div className="zone-actions">
         <Reveal as="button" type="button" className="act-box" onClick={onRestock}>
           <span className="act-plus" aria-hidden="true">+</span>
@@ -95,6 +132,9 @@ export default function Warehouse({ wh, stock, requests, onRestock, onNewProduct
           })}
         </div>
       </Reveal>
+
+        </>
+      )}
 
       <Reveal as="section" className="card">
         <header>

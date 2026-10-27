@@ -28,9 +28,9 @@ import StockBar from './components/StockBar.jsx'
 const SCREENS = [
   { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'ZONE SELL', roles: ['staff', 'owner'] },
   { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
-  { id: 'dashboard', key: '03', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
-  { id: 'products', key: '04', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
-  { id: 'warehouse', key: '05', label: 'Kho tổng', short: 'Kho', title: 'Kho tổng', roles: ['owner'] },
+  { id: 'warehouse', key: '03', label: 'Kho tổng', short: 'Kho', title: 'Kho tổng', roles: ['staff', 'owner'] },
+  { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
+  { id: 'products', key: '05', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
   { id: 'lock', key: '06', label: 'Chốt sổ', short: 'Chốt', title: 'Chốt sổ và audit', roles: ['owner'] },
 ]
 
@@ -108,6 +108,14 @@ export default function App() {
     setScreen(id)
     setOpenCh(null)
     setSub(null)
+    window.scrollTo({ top: 0 })
+  }
+
+  function openRequest(ch) {
+    setScreen('entry')
+    setOpenCh(ch)
+    setNewFrom(null)
+    setSub('request')
     window.scrollTo({ top: 0 })
   }
 
@@ -258,11 +266,9 @@ export default function App() {
             ))}
           </nav>
 
-          {role === 'owner' && (
-            <div className="side-stock">
-              <StockBar wh={wh} onOpen={() => go('warehouse')} />
-            </div>
-          )}
+          <div className="side-stock">
+            <StockBar wh={wh} onOpen={() => go('warehouse')} />
+          </div>
 
           <div className="side-foot">
             <p className="lbl">Xem với vai trò</p>
@@ -338,6 +344,8 @@ export default function App() {
                 />
               ) : (
                 <Warehouse
+                  role={role}
+                  onRequest={openRequest}
                   wh={wh}
                   stock={stock}
                   requests={requests}
