@@ -5,14 +5,40 @@ const vnd = new Intl.NumberFormat('vi-VN', {
 })
 
 // 1250000 -> "1.250.000 ₫"
-export function formatVND(n) {
-  return vnd.format(n)
+export function money(n) {
+  return vnd.format(Math.round(n))
 }
 
-// Date | 'YYYY-MM-DD' -> "27/10/2026"
-export function formatDate(value) {
-  const d = typeof value === 'string' ? new Date(`${value}T00:00:00`) : value
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  return `${dd}/${mm}/${d.getFullYear()}`
+// 4200000 -> "4,2 tr"
+export function compact(n) {
+  const a = Math.abs(n)
+  if (a >= 1e9) return `${(n / 1e9).toFixed(1).replace('.', ',')} tỷ`
+  if (a >= 1e6) return `${(n / 1e6).toFixed(1).replace('.', ',')} tr`
+  if (a >= 1e3) return `${Math.round(n / 1e3)} k`
+  return String(Math.round(n))
+}
+
+export function pct(x) {
+  return `${(x * 100).toFixed(1).replace('.', ',')}%`
+}
+
+// 'YYYY-MM-DD' -> "27/10/2026"
+export function dmy(dk) {
+  const [y, m, d] = dk.split('-')
+  return `${d}/${m}/${y}`
+}
+
+// 'YYYY-MM-DD' -> "27/10"
+export function dm(dk) {
+  const [, m, d] = dk.split('-')
+  return `${d}/${m}`
+}
+
+// Bỏ dấu để tìm "pho den" ra "Phở / Đen"
+export function deaccent(s) {
+  return String(s)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
 }

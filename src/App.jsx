@@ -1,184 +1,189 @@
-import { useState } from 'react'
-import { formatDate, formatVND } from './lib/format.js'
-import './App.css'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { DATES, isLocked, priceOf } from './data/seed.js'
+import { dmy } from './lib/format.js'
+import Entry from './screens/Entry.jsx'
+import History from './screens/History.jsx'
+import Dashboard from './screens/Dashboard.jsx'
+import Products from './screens/Products.jsx'
+import LockBook from './screens/LockBook.jsx'
 
-const SWATCHES = [
-  ['--bg', 'Nền trang'],
-  ['--surface', 'Card, bảng'],
-  ['--surface-2', 'Hover, hàng xen kẽ'],
-  ['--border', 'Đường kẻ'],
-  ['--border-strong', 'Viền control'],
-  ['--ink', 'Chữ chính'],
-  ['--ink-muted', 'Chữ phụ'],
-  ['--accent', 'Nút chính'],
-  ['--success', 'Đã chốt, đạt'],
-  ['--warning', 'Cờ cảnh báo'],
-  ['--danger', 'Lỗi, xóa'],
+const SCREENS = [
+  { id: 'entry', key: '01', label: 'Nhập liệu', short: 'Nhập', title: 'Nhập doanh số', roles: ['staff', 'owner'] },
+  { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
+  { id: 'dashboard', key: '03', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
+  { id: 'products', key: '04', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
+  { id: 'lock', key: '05', label: 'Chốt sổ', short: 'Chốt', title: 'Chốt sổ và audit', roles: ['owner'] },
 ]
 
-const CHANNELS = [
-  { code: 'SP', name: 'Shopee', color: 'var(--ch-1)' },
-  { code: 'TT', name: 'TikTok Shop', color: 'var(--ch-2)' },
-  { code: 'WEB', name: 'Website', color: 'var(--ch-3)' },
-  { code: 'STORE', name: 'Cửa hàng', color: 'var(--ch-4)' },
-  { code: 'ZL', name: 'Inbox / Zalo', color: 'var(--ch-5)' },
-]
+const TODAY = DATES[DATES.length - 1]
 
-const SAMPLE_ROWS = [
-  { sku: 'PC-TEE-PHO-BLK-M', name: 'Áo thun Phở / Đen / M', qty: 12, price: 289000 },
-  { sku: 'PC-TEE-PHO-BLK-L', name: 'Áo thun Phở / Đen / L', qty: 8, price: 289000 },
-  { sku: 'PC-HOO-ƯƠM-CRM-XL', name: 'Hoodie Ươm / Kem / XL', qty: 3, price: 559000 },
-]
-
-function AlertIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 4.5v4M8 10.8v.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
+// Mở app ở trạng thái đang làm việc thật, không phải vỏ rỗng
+const INITIAL_DRAFTS = {
+  [`${TODAY}|SP`]: [
+    { sku: 'PC-TEE-PHO-BLK-M', qty: 4, price: priceOf('PC-TEE-PHO-BLK-M', 'SP'), override: false },
+    { sku: 'PC-CAP-SEN-BLK-OS', qty: 2, price: priceOf('PC-CAP-SEN-BLK-OS', 'SP'), override: false },
+  ],
 }
 
-function LockIcon() {
+function RoleSwitch({ role, setRole, bare }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
+    <div className="roles" style={bare ? { background: 'var(--surface-2)' } : undefined}>
+      {[
+        ['staff', 'Nhân viên'],
+        ['owner', 'Owner'],
+      ].map(([id, label]) => (
+        <button key={id} type="button" aria-pressed={role === id} onClick={() => setRole(id)}>
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
 
 export default function App() {
-  const [qty, setQty] = useState('')
-  const invalid = qty !== '' && !/^\d+$/.test(qty)
+  const [role, setRole] = useState('staff')
+  const [screen, setScreen] = useState('entry')
+  const [date, setDate] = useState(TODAY)
+  const [ch, setCh] = useState('SP')
+  const [range, setRange] = useState(30)
+  const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
+  const [sent, setSent] = useState({})
+  const [toastState, setToastState] = useState(null)
+  const timer = useRef(null)
+
+  const visible = SCREENS.filter((s) => s.roles.includes(role))
+  const active = visible.find((s) => s.id === screen) ?? visible[0]
+
+  useEffect(() => {
+    if (!visible.some((s) => s.id === screen)) setScreen('entry')
+  }, [role, screen, visible])
+
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  const toast = useCallback((message, undo) => {
+    setToastState({ message, undo })
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setToastState(null), 4000)
+  }, [])
+
+  const key = `${date}|${ch}`
+  const rows = drafts[key] ?? []
+  const setRows = (next) => setDrafts((d) => ({ ...d, [key]: next }))
+
+  function statusOf(dk, chId) {
+    if (isLocked(dk)) return 'locked'
+    if (sent[`${dk}|${chId}`]) return 'sent'
+    return 'draft'
+  }
+  const status = statusOf(date, ch)
+
+  function go(id) {
+    setScreen(id)
+    window.scrollTo({ top: 0 })
+  }
 
   return (
-    <main className="page">
-      <header className="page-head reveal" style={{ '--i': 0 }}>
-        <p className="eyebrow">PHONCHAY Admin</p>
-        <h1>Nền thiết kế</h1>
-        <p className="lede">
-          Trang kiểm tra token, chữ tiếng Việt và các trạng thái control trước khi dựng màn nhập
-          liệu. Hôm nay: {formatDate(new Date())}.
-        </p>
-      </header>
-
-      <section className="block reveal" style={{ '--i': 1 }}>
-        <h2>Màu</h2>
-        <ul className="swatches">
-          {SWATCHES.map(([token, label]) => (
-            <li key={token}>
-              <span className="swatch" style={{ background: `var(${token})` }} />
-              <code>{token}</code>
-              <span className="muted">{label}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="block reveal" style={{ '--i': 2 }}>
-        <h2>5 kênh bán</h2>
-        <div className="row">
-          {CHANNELS.map((c) => (
-            <span key={c.code} className="chip chip-channel" style={{ '--chip-color': c.color }}>
-              <span className="dot" />
-              <span className="chip-code">{c.code}</span>
-              {c.name}
-            </span>
-          ))}
-        </div>
-        <p className="type-meta">Màu kênh luôn đi kèm mã chữ, không dùng màu làm tín hiệu duy nhất.</p>
-      </section>
-
-      <section className="block reveal" style={{ '--i': 3 }}>
-        <h2>Chữ</h2>
-        <div className="card type-sample">
-          <p className="type-kpi">{formatVND(48215000)}</p>
-          <p className="type-h">Nguyễn Thị Tuyết xuất sắc, ngược ngạo trưởng thành</p>
-          <p>
-            Áo thun Phở đen size M, hoodie Ươm màu kem. Thân chữ Be Vietnam Pro kiểm tra các dấu
-            ệ, ữ, ắ, ỡ, ặ, ự ở cỡ 16px.
-          </p>
-          <p className="type-meta">Chú thích 14px: cập nhật lần cuối {formatDate('2026-10-27')}.</p>
-        </div>
-      </section>
-
-      <section className="block reveal" style={{ '--i': 4 }}>
-        <h2>Bảng dòng bán</h2>
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Sản phẩm</th>
-                <th className="num">SL</th>
-                <th className="num">Giá</th>
-                <th className="num">Thành tiền</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SAMPLE_ROWS.map((r) => (
-                <tr key={r.sku}>
-                  <td>
-                    <code>{r.sku}</code>
-                  </td>
-                  <td>{r.name}</td>
-                  <td className="num">{r.qty}</td>
-                  <td className="num">{formatVND(r.price)}</td>
-                  <td className="num">{formatVND(r.qty * r.price)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="block reveal" style={{ '--i': 5 }}>
-        <h2>Control và trạng thái</h2>
-        <div className="card block">
-          <div className="row">
-            <button className="btn btn-primary">Gửi ngày</button>
-            <button className="btn btn-secondary">Lưu nháp</button>
-            <button className="btn btn-danger">Xóa dòng</button>
-            <button className="btn btn-primary" disabled>
-              Đang khóa
-            </button>
+    <>
+      <div className="shell">
+        <aside className="side">
+          <div className="brand">
+            <b>PHONCHAY</b>
+            <span>Admin nội bộ</span>
           </div>
-          <div className="form-grid">
-            <div className="field">
-              <label htmlFor="qty">Số lượng</label>
-              <input
-                id="qty"
-                className="input num"
-                inputMode="numeric"
-                value={qty}
-                onChange={(e) => setQty(e.target.value)}
-                aria-invalid={invalid}
-                aria-describedby={invalid ? 'qty-err' : undefined}
+
+          <nav className="nav" aria-label="Điều hướng chính">
+            {visible.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                aria-current={s.id === active.id ? 'page' : undefined}
+                onClick={() => go(s.id)}
+              >
+                <span className="nav-key">{s.key}</span>
+                {s.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="side-foot">
+            <p className="lbl">Xem với vai trò</p>
+            <RoleSwitch role={role} setRole={setRole} />
+            <p className="side-note">
+              Công tắc chỉ dùng cho bản demo. App thật chặn quyền ở database.
+            </p>
+          </div>
+        </aside>
+
+        <div className="main">
+          <header className="topbar">
+            <div>
+              <p className="crumb">
+                {role === 'owner' ? 'Owner' : 'Nhân viên'} · {active.label}
+              </p>
+              <h1>{active.title}</h1>
+            </div>
+            <div className="actions role-mobile">
+              <RoleSwitch role={role} setRole={setRole} bare />
+            </div>
+          </header>
+
+          <main className="view">
+            {active.id === 'entry' && (
+              <Entry
+                role={role}
+                date={date}
+                setDate={setDate}
+                ch={ch}
+                setCh={setCh}
+                rows={rows}
+                setRows={setRows}
+                status={status}
+                toast={toast}
+                onSend={() => {
+                  setSent((s) => ({ ...s, [key]: true }))
+                  toast(`Đã gửi ngày ${dmy(date)} · ${ch} cho owner.`)
+                }}
+                onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${ch}.`)}
               />
-              {invalid && (
-                <p id="qty-err" className="field-error">
-                  <AlertIcon />
-                  Số lượng phải là số nguyên không âm
-                </p>
-              )}
-            </div>
-            <div className="field">
-              <label htmlFor="note">Ghi chú</label>
-              <input id="note" className="input" />
-            </div>
-          </div>
-          <div className="row">
-            <span className="chip chip-draft">Nháp</span>
-            <span className="chip chip-sent">Đã gửi</span>
-            <span className="chip chip-locked">
-              <LockIcon />
-              Đã chốt
-            </span>
-          </div>
-          <p className="type-meta">Gõ chữ vào ô Số lượng để xem trạng thái lỗi.</p>
+            )}
+            {active.id === 'history' && <History statusOf={statusOf} />}
+            {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
+            {active.id === 'products' && <Products />}
+            {active.id === 'lock' && <LockBook />}
+          </main>
         </div>
-      </section>
-    </main>
+      </div>
+
+      <nav className="botnav" aria-label="Điều hướng">
+        {visible.slice(0, 5).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            aria-current={s.id === active.id ? 'page' : undefined}
+            onClick={() => go(s.id)}
+          >
+            <span className="ico">{s.key}</span>
+            {s.short}
+          </button>
+        ))}
+      </nav>
+
+      {toastState && (
+        <div className="toast" role="status">
+          <span>{toastState.message}</span>
+          {toastState.undo && (
+            <button
+              type="button"
+              onClick={() => {
+                toastState.undo()
+                setToastState(null)
+              }}
+            >
+              Hoàn tác
+            </button>
+          )}
+        </div>
+      )}
+    </>
   )
 }
