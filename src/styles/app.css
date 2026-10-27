@@ -461,12 +461,23 @@ tfoot td {
   color: var(--ink-3);
 }
 
+/* Ô nhỏ: sparkline xuống hàng riêng để dòng số đầy đủ không bị cắt.
+   Ô dẫn đầu rộng nên xếp ngang được. */
 .ch-main {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ch-card:not(.is-top) .spark {
+  width: 100%;
+  height: 34px;
+}
+
+.ch-card.is-top .ch-main {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-3);
-  min-width: 0;
 }
 
 .ch-net {
