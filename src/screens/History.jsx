@@ -2,12 +2,13 @@ import { CHANNELS, DATES } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, dmy } from '../lib/format.js'
 import { StatusChip } from '../components/bits.jsx'
+import Reveal from '../components/Reveal.jsx'
 
 export default function History({ statusOf }) {
   const days = [...DATES].reverse().slice(0, 12)
 
   return (
-    <section className="card">
+    <Reveal as="section" className="card">
       <header>
         <h2>12 ngày gần nhất</h2>
         <span className="hint">Ngày đã chốt chỉ đọc.</span>
@@ -50,6 +51,6 @@ export default function History({ statusOf }) {
           </tbody>
         </table>
       </div>
-    </section>
+    </Reveal>
   )
 }

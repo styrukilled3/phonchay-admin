@@ -4,7 +4,7 @@
 // Sàn ăn phí cao, kênh trực tiếp bằng 0. Sửa số ở đây khi biết phí thật.
 export const CHANNELS = [
   { id: '808', code: '808', name: '808', fee: 0.0, v: '--ch-1' },
-  { id: 'TLD', code: 'TLD', name: 'THAILAD', fee: 0.0, v: '--ch-2' },
+  { id: 'TLD', code: 'TLD', name: 'THAILAN', fee: 0.0, v: '--ch-2' },
   { id: 'HP', code: 'HP', name: 'HAIPHONG', fee: 0.0, v: '--ch-3' },
   { id: 'SHP', code: 'SHP', name: 'SHOPPE', fee: 0.11, v: '--ch-4' },
   { id: 'SPF', code: 'SPF', name: 'SHOPIFY', fee: 0.02, v: '--ch-5' },
@@ -28,9 +28,42 @@ export function product(sku) {
   return PRODUCTS.find((p) => p.sku === sku)
 }
 
+// Sản phẩm tạo mới có thể đặt giá riêng từng kênh (p.prices), không thì theo giá gốc cộng điều chỉnh kênh
 export function priceOf(sku, chId) {
   const p = product(sku)
-  return p ? p.base + (CH_ADJ[chId] ?? 0) : 0
+  if (!p) return 0
+  return p.prices?.[chId] ?? p.base + (CH_ADJ[chId] ?? 0)
+}
+
+// ---------- Kho ----------
+// Tồn theo SKU rồi theo kênh: stock[sku][chId]. Số mẫu, bán ra chưa trừ tồn trong bản demo.
+// Dưới LOW_BELOW tổng tồn của SKU là "sắp hết", bằng 0 là "hết hàng".
+export const LOW_BELOW = 15
+
+const STOCK_SEED = {
+  'PC-TEE-PHO-BLK-M': { '808': 18, TLD: 10, HP: 8, SHP: 14, SPF: 6 },
+  'PC-TEE-PHO-BLK-L': { '808': 20, TLD: 12, HP: 9, SHP: 16, SPF: 7 },
+  'PC-TEE-PHO-WHT-M': { '808': 4, TLD: 2, HP: 1, SHP: 3, SPF: 0 },
+  'PC-HOO-UOM-CRM-XL': { '808': 9, TLD: 6, HP: 5, SHP: 8, SPF: 3 },
+  'PC-HOO-UOM-BLK-L': { '808': 2, TLD: 1, HP: 0, SHP: 2, SPF: 1 },
+  'PC-CAP-SEN-BLK-OS': { '808': 22, TLD: 14, HP: 10, SHP: 18, SPF: 8 },
+  'PC-TOT-CHO-NAT-OS': { '808': 0, TLD: 0, HP: 0, SHP: 0, SPF: 0 },
+  'PC-SHO-DEM-IND-32': { '808': 7, TLD: 5, HP: 4, SHP: 6, SPF: 2 },
+}
+
+export function initialStock() {
+  return Object.fromEntries(Object.entries(STOCK_SEED).map(([sku, m]) => [sku, { ...m }]))
+}
+
+export const RECEIPTS_SEED = [
+  { id: 'PN-0270', date: '2026-10-24', qty: 120, total: 18600000 },
+  { id: 'PN-0269', date: '2026-10-17', qty: 90, total: 14700000 },
+  { id: 'PN-0268', date: '2026-10-09', qty: 150, total: 24300000 },
+]
+
+// Thêm sản phẩm mới vào danh mục chung (SKU search, bảng giá đọc từ PRODUCTS)
+export function addProduct(p) {
+  PRODUCTS.push(p)
 }
 
 export function channel(id) {

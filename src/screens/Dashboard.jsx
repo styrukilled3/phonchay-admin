@@ -2,7 +2,9 @@ import { CHANNELS, DATES, DAYS, LINES } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
 import { Delta, Kpi, Tag } from '../components/bits.jsx'
+import CountUp from '../components/CountUp.jsx'
 import { Sparkline, StackedArea } from '../components/Chart.jsx'
+import Reveal from '../components/Reveal.jsx'
 
 export default function Dashboard({ range, setRange }) {
   const dates = DATES.slice(-range)
@@ -16,7 +18,7 @@ export default function Dashboard({ range, setRange }) {
 
   return (
     <>
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Khoảng thời gian</h2>
           <span className="hint">
@@ -37,24 +39,24 @@ export default function Dashboard({ range, setRange }) {
             </button>
           ))}
         </div>
-      </section>
+      </Reveal>
 
       <div className="kpis">
-        <Kpi label="Doanh thu gộp" value={compact(cur.gross)} exact={money(cur.gross)} hero>
+        <Kpi label="Doanh thu gộp" value={<CountUp value={cur.gross} format={compact} />} exact={money(cur.gross)} hero>
           <Delta now={cur.gross} before={old?.gross} />
         </Kpi>
-        <Kpi label="Doanh thu net" value={compact(cur.net)} exact={money(cur.net)}>
+        <Kpi label="Doanh thu net" value={<CountUp value={cur.net} format={compact} />} exact={money(cur.net)}>
           <Delta now={cur.net} before={old?.net} />
         </Kpi>
-        <Kpi label="Margin" value={pct(cur.margin)}>
+        <Kpi label="Margin" value={<CountUp value={cur.margin} format={pct} />}>
           <Delta now={cur.margin} before={old?.margin} points />
         </Kpi>
-        <Kpi label="Sản phẩm bán" value={String(cur.qty)}>
+        <Kpi label="Sản phẩm bán" value={<CountUp value={cur.qty} />}>
           <Delta now={cur.qty} before={old?.qty} />
         </Kpi>
       </div>
 
-      <section className="card">
+      <Reveal as="section" className="card">
         <div className="chart-head">
           <h2>Doanh thu gộp theo ngày và kênh</h2>
           <div className="legend">
@@ -69,9 +71,9 @@ export default function Dashboard({ range, setRange }) {
         <p className="hint">
           Các lớp chồng lên nhau, mép trên cùng là doanh thu gộp của ngày. Trỏ vào một ngày để xem tổng.
         </p>
-      </section>
+      </Reveal>
 
-      <section className="block">
+      <Reveal as="section" className="block">
         <div className="block-head">
           <h2>5 kênh bán</h2>
           <span className="hint">Xếp theo net. Margin thấp là kênh ăn phí và hoàn nhiều.</span>
@@ -127,9 +129,9 @@ export default function Dashboard({ range, setRange }) {
             )
           })}
         </div>
-      </section>
+      </Reveal>
 
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Đọc nhanh</h2>
         </header>
@@ -141,7 +143,7 @@ export default function Dashboard({ range, setRange }) {
         <p className="hint">
           Số trong bản demo là dữ liệu giả sinh tại chỗ, không phải doanh thu thật của PHONCHAY.
         </p>
-      </section>
+      </Reveal>
     </>
   )
 }

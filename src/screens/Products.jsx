@@ -1,12 +1,13 @@
 import { CHANNELS, PRODUCTS, priceOf } from '../data/seed.js'
 import { compact, pct } from '../lib/format.js'
+import Reveal from '../components/Reveal.jsx'
 
 export default function Products() {
   // Kênh ăn phí nặng nhất: nhìn margin ở đây là thấy SKU nào mỏng lãi nhất
   const worstFee = CHANNELS.reduce((a, c) => (c.fee > a.fee ? c : a), CHANNELS[0])
 
   return (
-    <section className="card">
+    <Reveal as="section" className="card">
       <header>
         <h2>Bảng giá SKU × kênh</h2>
         <span className="hint">
@@ -55,6 +56,6 @@ export default function Products() {
         Cột Margin {worstFee.code} tính trên kênh {worstFee.name} sau phí {pct(worstFee.fee)}, để thấy
         SKU nào mỏng lãi nhất.
       </p>
-    </section>
+    </Reveal>
   )
 }

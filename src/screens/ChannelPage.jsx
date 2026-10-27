@@ -3,6 +3,7 @@ import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
 import { AreaOne } from '../components/Chart.jsx'
 import Entry from './Entry.jsx'
+import CountUp from '../components/CountUp.jsx'
 
 const TREND_DAYS = 30
 
@@ -40,24 +41,24 @@ export default function ChannelPage({ ch, role, onBack, ...entryProps }) {
         <dl className="hero-stats">
           <div>
             <dt>Doanh thu gộp</dt>
-            <dd className="big">{compact(a.gross)}</dd>
+            <dd className="big"><CountUp value={a.gross} format={compact} /></dd>
             <dd className="sub">{money(a.gross)}</dd>
           </div>
           <div>
             <dt>Số lượng bán</dt>
-            <dd className="big">{a.qty}</dd>
+            <dd className="big"><CountUp value={a.qty} /></dd>
             <dd className="sub">{a.retQty ? `${a.retQty} hoàn` : 'không có hoàn'}</dd>
           </div>
           {role === 'owner' && (
             <>
               <div>
                 <dt>Doanh thu net</dt>
-                <dd className="big">{compact(a.net)}</dd>
+                <dd className="big"><CountUp value={a.net} format={compact} /></dd>
                 <dd className="sub">sau phí {compact(a.fee)}</dd>
               </div>
               <div>
                 <dt>Margin</dt>
-                <dd className={`big ${a.margin < 0.25 ? 'is-down' : 'is-up'}`}>{pct(a.margin)}</dd>
+                <dd className={`big ${a.margin < 0.25 ? 'is-down' : 'is-up'}`}><CountUp value={a.margin} format={pct} /></dd>
                 <dd className="sub">giá vốn {compact(a.cogs)}</dd>
               </div>
             </>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CHANNELS, DATES, channel, isLocked, priceOf } from './data/seed.js'
+import { CHANNELS, DATES, RECEIPTS_SEED, addProduct, channel, initialStock, isLocked, priceOf } from './data/seed.js'
 import { dmy } from './lib/format.js'
 import Channels from './screens/Channels.jsx'
 import ChannelPage from './screens/ChannelPage.jsx'
@@ -7,9 +7,12 @@ import History from './screens/History.jsx'
 import Dashboard from './screens/Dashboard.jsx'
 import Products from './screens/Products.jsx'
 import LockBook from './screens/LockBook.jsx'
+import Restock from './screens/Restock.jsx'
+import NewProduct from './screens/NewProduct.jsx'
+import StockBar from './components/StockBar.jsx'
 
 const SCREENS = [
-  { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'Chọn kênh bán', roles: ['staff', 'owner'] },
+  { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'ZONE SELL', roles: ['staff', 'owner'] },
   { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
   { id: 'dashboard', key: '03', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
   { id: 'products', key: '04', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
@@ -50,6 +53,11 @@ export default function App() {
   const [range, setRange] = useState(30)
   const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
   const [sent, setSent] = useState({})
+  const [stock, setStock] = useState(initialStock)
+  const [receipts, setReceipts] = useState(RECEIPTS_SEED)
+  // sub: màn con của Kênh bán. 'restock' | 'newproduct'; newFrom nhớ để quay lại đúng chỗ
+  const [sub, setSub] = useState(null)
+  const [newFrom, setNewFrom] = useState(null)
   const [toastState, setToastState] = useState(null)
   const timer = useRef(null)
 
@@ -81,7 +89,47 @@ export default function App() {
   function go(id) {
     setScreen(id)
     setOpenCh(null)
+    setSub(null)
     window.scrollTo({ top: 0 })
+  }
+
+  function openRestock() {
+    setScreen('entry')
+    setOpenCh(null)
+    setNewFrom(null)
+    setSub('restock')
+    window.scrollTo({ top: 0 })
+  }
+
+  function openSub(id) {
+    setNewFrom(sub)
+    setSub(id)
+    window.scrollTo({ top: 0 })
+  }
+
+  function confirmRestock({ rows, date: d, supplier, target, totalQty, totalCost }) {
+    setStock((st) => {
+      const next = { ...st }
+      rows.forEach((r) => {
+        next[r.sku] = { ...next[r.sku], [target]: (next[r.sku]?.[target] ?? 0) + r.qty }
+      })
+      return next
+    })
+    const id = `PN-${String(Number(receipts[0].id.slice(3)) + 1).padStart(4, '0')}`
+    setReceipts((r) => [{ id, date: d, qty: totalQty, total: totalCost }, ...r])
+    setSub(null)
+    window.scrollTo({ top: 0 })
+    toast(`Đã nhập ${totalQty} sp vào ${channel(target).name}${supplier ? ` · ${supplier}` : ''}.`)
+  }
+
+  function saveProduct(p, qty) {
+    addProduct(p)
+    setStock((st) => ({ ...st, [p.sku]: qty }))
+    // Tạo từ phiếu nhập thì quay lại phiếu để thêm dòng luôn
+    setSub(newFrom === 'restock' ? 'restock' : null)
+    setNewFrom(null)
+    window.scrollTo({ top: 0 })
+    toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
   }
 
   function openChannel(id) {
@@ -91,8 +139,20 @@ export default function App() {
 
   const onChannelPage = active.id === 'entry' && openCh
   const roleLabel = role === 'owner' ? 'Owner' : 'Nhân viên'
-  const title = onChannelPage ? channel(openCh).name : active.title
-  const crumb = onChannelPage ? `${roleLabel} · Kênh bán` : `${roleLabel} · ${active.label}`
+  const inSub = active.id === 'entry' && !openCh && sub
+  const title = onChannelPage
+    ? channel(openCh).name
+    : inSub === 'restock'
+      ? 'Nhập hàng'
+      : inSub === 'newproduct'
+        ? 'Tạo sản phẩm mới'
+        : active.title
+  const crumb =
+    onChannelPage || inSub
+      ? `${roleLabel} · Kênh bán`
+      : active.id === 'entry'
+        ? roleLabel.toUpperCase()
+        : `${roleLabel} · ${active.label}`
 
   return (
     <>
@@ -122,6 +182,10 @@ export default function App() {
             ))}
           </nav>
 
+          <div className="side-stock">
+            <StockBar stock={stock} onOpen={openRestock} />
+          </div>
+
           <div className="side-foot">
             <p className="lbl">Xem với vai trò</p>
             <RoleSwitch role={role} setRole={setRole} />
@@ -144,7 +208,26 @@ export default function App() {
 
           <main className="view">
             {active.id === 'entry' &&
-              (openCh ? (
+              (inSub === 'restock' ? (
+                <Restock
+                  stock={stock}
+                  receipts={receipts}
+                  today={TODAY}
+                  toast={toast}
+                  onBack={() => setSub(null)}
+                  onNewProduct={() => openSub('newproduct')}
+                  onConfirm={confirmRestock}
+                />
+              ) : inSub === 'newproduct' ? (
+                <NewProduct
+                  toast={toast}
+                  onBack={() => {
+                    setSub(newFrom === 'restock' ? 'restock' : null)
+                    setNewFrom(null)
+                  }}
+                  onSave={saveProduct}
+                />
+              ) : openCh ? (
                 <ChannelPage
                   ch={openCh}
                   role={role}
@@ -162,7 +245,15 @@ export default function App() {
                   onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
                 />
               ) : (
-                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} />
+                <Channels
+                  role={role}
+                  date={date}
+                  statusOf={statusOf}
+                  onOpen={openChannel}
+                  stock={stock}
+                  onRestock={() => openSub('restock')}
+                  onNewProduct={() => openSub('newproduct')}
+                />
               ))}
             {active.id === 'history' && <History statusOf={statusOf} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}

@@ -1,6 +1,7 @@
 import { DATES, isLocked } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, dm, dmy } from '../lib/format.js'
+import Reveal from '../components/Reveal.jsx'
 
 const LOG = [
   ['27/10 16:42', 'Trang (staff)', 'Sửa số lượng', 'PC-TEE-PHO-BLK-M · 808', '3', '4'],
@@ -20,7 +21,7 @@ const LOG = [
 export default function LockBook() {
   return (
     <>
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Trạng thái 30 ngày</h2>
           <span className="hint">Chốt rồi là chỉ đọc. Mở khóa được ghi vào audit log.</span>
@@ -37,9 +38,9 @@ export default function LockBook() {
             )
           })}
         </div>
-      </section>
+      </Reveal>
 
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Audit log</h2>
           <span className="hint">Chỉ thêm, không sửa, không xóa.</span>
@@ -70,7 +71,7 @@ export default function LockBook() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Reveal>
     </>
   )
 }

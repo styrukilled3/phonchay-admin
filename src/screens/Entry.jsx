@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { DATES, channel, PRODUCTS, priceOf, product } from '../data/seed.js'
 import { deaccent, dmy, money, pct } from '../lib/format.js'
 import { LockIcon, NumInput, StatusChip, Tag, TrashIcon } from '../components/bits.jsx'
+import Reveal from '../components/Reveal.jsx'
 
 export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast }) {
   const [query, setQuery] = useState('')
@@ -49,7 +50,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
 
   return (
     <>
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Ngày bán</h2>
           <StatusChip status={status} />
@@ -84,7 +85,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
             <span>Đã gửi ngày này cho owner. Mày vẫn sửa được đến khi owner chốt sổ.</span>
           </p>
         )}
-      </section>
+      </Reveal>
 
       {!locked && (
         <section className="card card-finder">
@@ -139,7 +140,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
         </section>
       )}
 
-      <section className="card">
+      <Reveal as="section" className="card">
         <header>
           <h2>Dòng bán {dmy(date)}</h2>
           <Tag ch={chn}>
@@ -274,7 +275,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
             </button>
           </div>
         )}
-      </section>
+      </Reveal>
     </>
   )
 }
