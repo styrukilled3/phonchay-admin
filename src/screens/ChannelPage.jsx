@@ -1,13 +1,14 @@
-import { DATES, channel } from '../data/seed.js'
+import { DATES, PRODUCTS, channel, product } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
 import { AreaOne } from '../components/Chart.jsx'
 import Entry from './Entry.jsx'
+import Reveal from '../components/Reveal.jsx'
 import CountUp from '../components/CountUp.jsx'
 
 const TREND_DAYS = 30
 
-export default function ChannelPage({ ch, role, onBack, ...entryProps }) {
+export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...entryProps }) {
   const c = channel(ch)
   const trend = DATES.slice(-TREND_DAYS)
   const a = aggOf(trend, ch)
@@ -27,6 +28,9 @@ export default function ChannelPage({ ch, role, onBack, ...entryProps }) {
             />
           </svg>
           Tất cả kênh
+        </button>
+        <button type="button" className="btn btn-secondary ch-req" onClick={onRequest}>
+          Yêu cầu lấy hàng
         </button>
       </div>
 
@@ -69,6 +73,24 @@ export default function ChannelPage({ ch, role, onBack, ...entryProps }) {
           <AreaOne dates={trend} series={series} color={`var(${c.v})`} />
         </div>
       </section>
+
+      <Reveal as="section" className="card">
+        <header>
+          <h2>Tồn kho kênh {c.name}</h2>
+          <span className="hint">Chỉ bán được trong số này. Hết thì gửi yêu cầu lấy hàng.</span>
+        </header>
+        <ul className="stk-list">
+          {PRODUCTS.map((p) => {
+            const n = stock[p.sku]?.[ch] ?? 0
+            return (
+              <li key={p.sku} className={n === 0 ? 'is-zero' : n < 5 ? 'is-low' : ''}>
+                <span>{product(p.sku).name} · {p.variant}</span>
+                <b>{n}</b>
+              </li>
+            )
+          })}
+        </ul>
+      </Reveal>
 
       <Entry role={role} ch={ch} {...entryProps} />
     </>

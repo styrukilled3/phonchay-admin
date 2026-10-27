@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CHANNELS, DATES, RECEIPTS_SEED, addProduct, channel, initialStock, isLocked, priceOf } from './data/seed.js'
+import {
+  CHANNELS,
+  DATES,
+  RECEIPTS_SEED,
+  addProduct,
+  channel,
+  initialRequests,
+  initialStock,
+  initialWarehouse,
+  isLocked,
+  priceOf,
+  setDayLines,
+} from './data/seed.js'
 import { dmy } from './lib/format.js'
 import Channels from './screens/Channels.jsx'
 import ChannelPage from './screens/ChannelPage.jsx'
@@ -8,6 +20,8 @@ import Dashboard from './screens/Dashboard.jsx'
 import Products from './screens/Products.jsx'
 import LockBook from './screens/LockBook.jsx'
 import Restock from './screens/Restock.jsx'
+import Warehouse from './screens/Warehouse.jsx'
+import RequestStock from './screens/RequestStock.jsx'
 import NewProduct from './screens/NewProduct.jsx'
 import StockBar from './components/StockBar.jsx'
 
@@ -16,7 +30,8 @@ const SCREENS = [
   { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
   { id: 'dashboard', key: '03', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
   { id: 'products', key: '04', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
-  { id: 'lock', key: '05', label: 'Chốt sổ', short: 'Chốt', title: 'Chốt sổ và audit', roles: ['owner'] },
+  { id: 'warehouse', key: '05', label: 'Kho tổng', short: 'Kho', title: 'Kho tổng', roles: ['owner'] },
+  { id: 'lock', key: '06', label: 'Chốt sổ', short: 'Chốt', title: 'Chốt sổ và audit', roles: ['owner'] },
 ]
 
 const TODAY = DATES[DATES.length - 1]
@@ -54,8 +69,11 @@ export default function App() {
   const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
   const [sent, setSent] = useState({})
   const [stock, setStock] = useState(initialStock)
+  const [wh, setWh] = useState(initialWarehouse)
+  const [requests, setRequests] = useState(initialRequests)
+  const [sentRows, setSentRows] = useState({}) // key ngày|kênh -> dòng đã gửi, để tính lại tồn khi gửi lại
   const [receipts, setReceipts] = useState(RECEIPTS_SEED)
-  // sub: màn con của Kênh bán. 'restock' | 'newproduct'; newFrom nhớ để quay lại đúng chỗ
+  // sub: màn con. 'restock' | 'newproduct' (trong Kho tổng), 'request' (trong trang kênh); newFrom nhớ để quay lại đúng chỗ
   const [sub, setSub] = useState(null)
   const [newFrom, setNewFrom] = useState(null)
   const [toastState, setToastState] = useState(null)
@@ -93,25 +111,17 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }
 
-  function openRestock() {
-    setScreen('entry')
-    setOpenCh(null)
-    setNewFrom(null)
-    setSub('restock')
-    window.scrollTo({ top: 0 })
-  }
-
   function openSub(id) {
     setNewFrom(sub)
     setSub(id)
     window.scrollTo({ top: 0 })
   }
 
-  function confirmRestock({ rows, date: d, supplier, target, totalQty, totalCost }) {
-    setStock((st) => {
-      const next = { ...st }
+  function confirmRestock({ rows, date: d, supplier, totalQty, totalCost }) {
+    setWh((w) => {
+      const next = { ...w }
       rows.forEach((r) => {
-        next[r.sku] = { ...next[r.sku], [target]: (next[r.sku]?.[target] ?? 0) + r.qty }
+        next[r.sku] = (next[r.sku] ?? 0) + r.qty
       })
       return next
     })
@@ -119,12 +129,12 @@ export default function App() {
     setReceipts((r) => [{ id, date: d, qty: totalQty, total: totalCost }, ...r])
     setSub(null)
     window.scrollTo({ top: 0 })
-    toast(`Đã nhập ${totalQty} sp vào ${channel(target).name}${supplier ? ` · ${supplier}` : ''}.`)
+    toast(`Đã nhập ${totalQty} sp vào kho tổng${supplier ? ` · ${supplier}` : ''}.`)
   }
 
   function saveProduct(p, qty) {
     addProduct(p)
-    setStock((st) => ({ ...st, [p.sku]: qty }))
+    setWh((w) => ({ ...w, [p.sku]: qty }))
     // Tạo từ phiếu nhập thì quay lại phiếu để thêm dòng luôn
     setSub(newFrom === 'restock' ? 'restock' : null)
     setNewFrom(null)
@@ -132,27 +142,92 @@ export default function App() {
     toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
   }
 
+  function submitRequest(ch, lines) {
+    const n = requests.reduce((m, r) => Math.max(m, Number(r.id.slice(3))), 0) + 1
+    const id = `YC-${String(n).padStart(4, '0')}`
+    setRequests((r) => [{ id, ch, date: TODAY, status: 'pending', lines }, ...r])
+    toast(`Đã gửi yêu cầu ${id} cho owner.`)
+  }
+
+  function approveRequest(id) {
+    const r = requests.find((x) => x.id === id)
+    if (!r || !r.lines.every((l) => (wh[l.sku] ?? 0) >= l.qty)) {
+      toast('Kho tổng không đủ hàng để duyệt yêu cầu này.')
+      return
+    }
+    setWh((w) => {
+      const next = { ...w }
+      r.lines.forEach((l) => {
+        next[l.sku] -= l.qty
+      })
+      return next
+    })
+    setStock((st) => {
+      const next = { ...st }
+      r.lines.forEach((l) => {
+        next[l.sku] = { ...next[l.sku], [r.ch]: (next[l.sku]?.[r.ch] ?? 0) + l.qty }
+      })
+      return next
+    })
+    setRequests((rs) => rs.map((x) => (x.id === id ? { ...x, status: 'approved' } : x)))
+    toast(`Đã duyệt ${id}, chuyển hàng xuống ${channel(r.ch).name}.`)
+  }
+
+  function rejectRequest(id) {
+    setRequests((rs) => rs.map((x) => (x.id === id ? { ...x, status: 'rejected' } : x)))
+    toast(`Đã từ chối ${id}.`)
+  }
+
+  // Tồn bán được của SKU ở kênh đang mở: tồn kênh cộng lại phần đã gửi trước đó (gửi lại thì tính lại)
+  function availOf(sku) {
+    const prev = (sentRows[key] ?? []).find((r) => r.sku === sku)?.qty ?? 0
+    return (stock[sku]?.[openCh] ?? 0) + prev
+  }
+
+  // Gửi ngày: ghi số bán vào dữ liệu doanh thu và trừ tồn kênh
+  function sendDay() {
+    const prev = sentRows[key] ?? []
+    const next = rows.filter((r) => r.qty > 0).map((r) => ({ sku: r.sku, qty: r.qty }))
+    setStock((st) => {
+      const out = { ...st }
+      const touch = (sku, delta) => {
+        out[sku] = { ...out[sku], [openCh]: (out[sku]?.[openCh] ?? 0) + delta }
+      }
+      prev.forEach((r) => touch(r.sku, r.qty))
+      next.forEach((r) => touch(r.sku, -r.qty))
+      return out
+    })
+    setDayLines(date, openCh, next)
+    setSentRows((m) => ({ ...m, [key]: next }))
+    setSent((x) => ({ ...x, [key]: true }))
+    toast(`Đã gửi ngày ${dmy(date)} · ${channel(openCh).name} cho owner.`)
+  }
+
   function openChannel(id) {
     setOpenCh(id)
     window.scrollTo({ top: 0 })
   }
 
-  const onChannelPage = active.id === 'entry' && openCh
-  const roleLabel = role === 'owner' ? 'Owner' : 'Nhân viên'
-  const inSub = active.id === 'entry' && !openCh && sub
-  const title = onChannelPage
-    ? channel(openCh).name
-    : inSub === 'restock'
-      ? 'Nhập hàng'
-      : inSub === 'newproduct'
-        ? 'Tạo sản phẩm mới'
-        : active.title
+  const onChannelPage = active.id === 'entry' && openCh && sub !== 'request'
+  const onRequest = active.id === 'entry' && openCh && sub === 'request'
+  const inWh = active.id === 'warehouse' ? sub : null
+  const title = onRequest
+    ? 'Yêu cầu lấy hàng'
+    : onChannelPage
+      ? channel(openCh).name
+      : inWh === 'restock'
+        ? 'Nhập hàng'
+        : inWh === 'newproduct'
+          ? 'Tạo sản phẩm mới'
+          : active.title
   const crumb =
-    onChannelPage || inSub
+    onChannelPage || onRequest
       ? `${roleLabel} · Kênh bán`
-      : active.id === 'entry'
-        ? roleLabel.toUpperCase()
-        : `${roleLabel} · ${active.label}`
+      : inWh
+        ? `${roleLabel} · Kho tổng`
+        : active.id === 'entry'
+          ? roleLabel.toUpperCase()
+          : `${roleLabel} · ${active.label}`
 
   return (
     <>
@@ -182,9 +257,11 @@ export default function App() {
             ))}
           </nav>
 
-          <div className="side-stock">
-            <StockBar stock={stock} onOpen={openRestock} />
-          </div>
+          {role === 'owner' && (
+            <div className="side-stock">
+              <StockBar wh={wh} onOpen={() => go('warehouse')} />
+            </div>
+          )}
 
           <div className="side-foot">
             <p className="lbl">Xem với vai trò</p>
@@ -208,9 +285,40 @@ export default function App() {
 
           <main className="view">
             {active.id === 'entry' &&
-              (inSub === 'restock' ? (
-                <Restock
+              (onRequest ? (
+                <RequestStock
+                  ch={openCh}
+                  wh={wh}
                   stock={stock}
+                  requests={requests}
+                  toast={toast}
+                  onBack={() => setSub(null)}
+                  onSubmit={submitRequest}
+                />
+              ) : openCh ? (
+                <ChannelPage
+                  ch={openCh}
+                  role={role}
+                  onBack={() => setOpenCh(null)}
+                  onRequest={() => openSub('request')}
+                  stock={stock}
+                  avail={availOf}
+                  date={date}
+                  setDate={setDate}
+                  rows={rows}
+                  setRows={setRows}
+                  status={statusOf(date, openCh)}
+                  toast={toast}
+                  onSend={sendDay}
+                  onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
+                />
+              ) : (
+                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} stock={stock} />
+              ))}
+            {active.id === 'warehouse' &&
+              (inWh === 'restock' ? (
+                <Restock
+                  wh={wh}
                   receipts={receipts}
                   today={TODAY}
                   toast={toast}
@@ -218,7 +326,7 @@ export default function App() {
                   onNewProduct={() => openSub('newproduct')}
                   onConfirm={confirmRestock}
                 />
-              ) : inSub === 'newproduct' ? (
+              ) : inWh === 'newproduct' ? (
                 <NewProduct
                   toast={toast}
                   onBack={() => {
@@ -227,32 +335,15 @@ export default function App() {
                   }}
                   onSave={saveProduct}
                 />
-              ) : openCh ? (
-                <ChannelPage
-                  ch={openCh}
-                  role={role}
-                  onBack={() => setOpenCh(null)}
-                  date={date}
-                  setDate={setDate}
-                  rows={rows}
-                  setRows={setRows}
-                  status={statusOf(date, openCh)}
-                  toast={toast}
-                  onSend={() => {
-                    setSent((s) => ({ ...s, [key]: true }))
-                    toast(`Đã gửi ngày ${dmy(date)} · ${channel(openCh).name} cho owner.`)
-                  }}
-                  onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
-                />
               ) : (
-                <Channels
-                  role={role}
-                  date={date}
-                  statusOf={statusOf}
-                  onOpen={openChannel}
+                <Warehouse
+                  wh={wh}
                   stock={stock}
+                  requests={requests}
                   onRestock={() => openSub('restock')}
                   onNewProduct={() => openSub('newproduct')}
+                  onApprove={approveRequest}
+                  onReject={rejectRequest}
                 />
               ))}
             {active.id === 'history' && <History statusOf={statusOf} />}
@@ -264,7 +355,7 @@ export default function App() {
       </div>
 
       <nav className="botnav" aria-label="Điều hướng">
-        {visible.slice(0, 5).map((s) => (
+        {visible.map((s) => (
           <button
             key={s.id}
             type="button"

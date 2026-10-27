@@ -2,15 +2,15 @@ import { stockStats } from '../lib/stock.js'
 import CountUp from './CountUp.jsx'
 
 /* Thanh tổng kho: số lượng + thanh chia ổn / sắp hết / hết hàng. Bấm để sang Nhập hàng. */
-export default function StockBar({ stock, onOpen, compact = false }) {
-  const s = stockStats(stock)
+export default function StockBar({ wh, onOpen, compact = false }) {
+  const s = stockStats(wh)
   const part = (n) => `${(n / s.skus) * 100}%`
 
   return (
     <button type="button" className={`stockbar${compact ? ' is-compact' : ''}`} onClick={onOpen}>
       <span className="sb-top">
         <span className="sb-lbl">Tổng kho</span>
-        <span className="sb-go">Nhập hàng →</span>
+        <span className="sb-go">Mở kho →</span>
       </span>
       <span className="sb-num">
         <CountUp value={s.units} format={(n) => Math.round(n).toLocaleString('vi-VN')} />

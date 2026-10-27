@@ -19,12 +19,11 @@ export default function NewProduct({ onBack, onSave, toast }) {
   const [cost, setCost] = useState(0)
   const [base, setBase] = useState(0)
   const [prices, setPrices] = useState({}) // giá riêng từng kênh, trống = theo giá gốc
-  const [qty, setQty] = useState({}) // tồn đầu theo kênh
+  const [qty, setQty] = useState(0) // tồn đầu kỳ, vào kho tổng
 
   const shownSku = skuTouched ? sku : suggestSku(name, variant)
   const dup = PRODUCTS.some((p) => p.sku === shownSku)
   const valid = name.trim() && shownSku && !dup && base > 0 && cost >= 0
-  const totalQty = CHANNELS.reduce((s, c) => s + (qty[c.id] ?? 0), 0)
 
   function save() {
     onSave(
@@ -36,7 +35,7 @@ export default function NewProduct({ onBack, onSave, toast }) {
         cost,
         prices: Object.fromEntries(CHANNELS.map((c) => [c.id, prices[c.id] || base])),
       },
-      Object.fromEntries(CHANNELS.map((c) => [c.id, qty[c.id] ?? 0])),
+      qty,
     )
   }
 
@@ -123,21 +122,14 @@ export default function NewProduct({ onBack, onSave, toast }) {
 
           <Reveal as="section" className="card">
             <header>
-              <h2>Tồn kho đầu kỳ</h2>
-              <span className="hint">Tổng {totalQty} sp. Bỏ trống nếu chưa nhập hàng.</span>
+              <h2>Tồn kho tổng đầu kỳ</h2>
+              <span className="hint">Số lượng đưa vào kho tổng. Để 0 nếu chưa nhập hàng.</span>
             </header>
-            <div className="np-stock">
-              {CHANNELS.map((c) => (
-                <div className="field" key={c.id}>
-                  <label htmlFor={`np-q-${c.id}`}>{c.name}</label>
-                  <NumInput
-                    id={`np-q-${c.id}`}
-                    className="input"
-                    value={qty[c.id] ?? 0}
-                    onCommit={(n) => setQty((q) => ({ ...q, [c.id]: n }))}
-                  />
-                </div>
-              ))}
+            <div className="rs-grid">
+              <div className="field">
+                <label htmlFor="np-q">Số lượng</label>
+                <NumInput id="np-q" className="input" value={qty} onCommit={setQty} />
+              </div>
             </div>
           </Reveal>
         </div>

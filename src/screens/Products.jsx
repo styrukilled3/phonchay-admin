@@ -11,7 +11,7 @@ export default function Products() {
       <header>
         <h2>Bảng giá SKU × kênh</h2>
         <span className="hint">
-          {PRODUCTS.length} SKU. Giá niêm yết mặc định, lúc nhập vẫn ghi đè được.
+          {PRODUCTS.length} SKU. Giá bán riêng từng kênh, giá vốn chung. Nhân viên không sửa giá khi báo bán.
         </span>
       </header>
       <div className="tw">

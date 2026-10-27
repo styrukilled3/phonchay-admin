@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { CHANNELS, PRODUCTS, product } from '../data/seed.js'
+import { PRODUCTS, product } from '../data/seed.js'
 import { compact, deaccent, dmy, money } from '../lib/format.js'
-import { skuUnits, stockStats, stockStatus } from '../lib/stock.js'
+import { stockStats, stockStatus } from '../lib/stock.js'
 import { NumInput, TrashIcon } from '../components/bits.jsx'
 import CountUp from '../components/CountUp.jsx'
 import Reveal from '../components/Reveal.jsx'
@@ -14,10 +14,10 @@ function Badge({ status }) {
   return null
 }
 
-export default function Restock({ stock, receipts, today, onBack, onNewProduct, onConfirm, toast }) {
+export default function Restock({ wh, receipts, today, onBack, onNewProduct, onConfirm, toast }) {
   // Mở sẵn các SKU sắp hết / hết để nhập nhanh
   const [rows, setRows] = useState(() =>
-    PRODUCTS.filter((p) => stockStatus(stock, p) !== 'ok').map((p) => ({
+    PRODUCTS.filter((p) => stockStatus(wh, p) !== 'ok').map((p) => ({
       sku: p.sku,
       qty: SUGGEST_QTY,
       cost: p.cost,
@@ -26,11 +26,10 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
   const [date, setDate] = useState(today)
   const [supplier, setSupplier] = useState('')
   const [note, setNote] = useState('')
-  const [target, setTarget] = useState(CHANNELS[0].id)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
 
-  const stats = stockStats(stock)
+  const stats = stockStats(wh)
   const totalQty = rows.reduce((s, r) => s + r.qty, 0)
   const totalCost = rows.reduce((s, r) => s + r.qty * r.cost, 0)
 
@@ -60,13 +59,13 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M13 8H4M7.5 4.5L4 8l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Tất cả kênh
+          Kho tổng
         </button>
       </div>
 
       <Reveal className="rs-kpis">
         <div className="kpi">
-          <span className="lbl">Tổng tồn</span>
+          <span className="lbl">Tổng kho</span>
           <span className="val"><CountUp value={stats.units} format={(n) => Math.round(n).toLocaleString('vi-VN')} /> sp</span>
         </div>
         <div className="kpi">
@@ -82,7 +81,7 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
       <Reveal as="section" className="card rs-form">
         <header>
           <h2>Phiếu nhập hàng</h2>
-          <span className="hint">Nhập xong bấm xác nhận để cộng vào tồn kho.</span>
+          <span className="hint">Xác nhận thì cộng vào kho tổng.</span>
         </header>
         <div className="rs-grid">
           <div className="field">
@@ -92,14 +91,6 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
           <div className="field">
             <label htmlFor="rs-sup">Nhà cung cấp</label>
             <input id="rs-sup" className="input" placeholder="Xưởng may, nhà in..." value={supplier} onChange={(e) => setSupplier(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="rs-ch">Nhập vào kênh</label>
-            <select id="rs-ch" className="input" value={target} onChange={(e) => setTarget(e.target.value)}>
-              {CHANNELS.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
           </div>
           <div className="field">
             <label htmlFor="rs-note">Ghi chú</label>
@@ -151,11 +142,11 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
                 <div className="rs-name">
                   <b>{p.name}</b>
                   <span>{p.variant} · {p.sku}</span>
-                  <Badge status={stockStatus(stock, p)} />
+                  <Badge status={stockStatus(wh, p)} />
                 </div>
                 <div className="rs-cell">
                   <span className="k">Tồn hiện tại</span>
-                  <span className="v">{skuUnits(stock, p.sku)}</span>
+                  <span className="v">{wh[p.sku] ?? 0}</span>
                 </div>
                 <div className="rs-cell">
                   <span className="k">SL nhập</span>
@@ -194,7 +185,7 @@ export default function Restock({ stock, receipts, today, onBack, onNewProduct, 
             type="button"
             className="btn"
             disabled={!canSave}
-            onClick={() => onConfirm({ rows, date, supplier, note, target, totalQty, totalCost })}
+            onClick={() => onConfirm({ rows, date, supplier, note, totalQty, totalCost })}
           >
             Xác nhận nhập kho
           </button>

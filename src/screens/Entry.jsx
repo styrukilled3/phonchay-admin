@@ -4,7 +4,7 @@ import { deaccent, dmy, money, pct } from '../lib/format.js'
 import { LockIcon, NumInput, StatusChip, Tag, TrashIcon } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast }) {
+export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast, avail }) {
   const [query, setQuery] = useState('')
   const searchRef = useRef(null)
   const chn = channel(ch)
@@ -27,9 +27,16 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
 
   function addRow(sku) {
     const found = rows.find((r) => r.sku === sku)
+    const max = avail(sku)
     if (found) {
-      setRows(rows.map((r) => (r.sku === sku ? { ...r, qty: r.qty + 1 } : r)))
-      toast(`Đã cộng dồn vào dòng ${sku} (chống nhập trùng).`)
+      if (found.qty >= max) {
+        toast(`${sku} chỉ còn ${max} ở kênh này.`)
+      } else {
+        setRows(rows.map((r) => (r.sku === sku ? { ...r, qty: r.qty + 1 } : r)))
+        toast(`Đã cộng dồn vào dòng ${sku} (chống nhập trùng).`)
+      }
+    } else if (max <= 0) {
+      toast(`${sku} hết tồn ở kênh này. Gửi yêu cầu lấy hàng từ kho tổng.`)
     } else {
       setRows([...rows, { sku, qty: 1, price: priceOf(sku, ch), override: false }])
     }
@@ -38,6 +45,13 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
   }
 
   function patch(idx, next) {
+    if (next.qty != null) {
+      const max = avail(rows[idx].sku)
+      if (next.qty > max) {
+        toast(`${rows[idx].sku} chỉ còn ${max} ở kênh này.`)
+        next = { ...next, qty: max }
+      }
+    }
     setRows(rows.map((r, i) => (i === idx ? { ...r, ...next } : r)))
   }
 
@@ -82,7 +96,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
         )}
         {!locked && status === 'sent' && (
           <p className="banner">
-            <span>Đã gửi ngày này cho owner. Mày vẫn sửa được đến khi owner chốt sổ.</span>
+            <span>Đã gửi ngày này cho owner. Mày vẫn sửa được đến khi owner chốt sổ. Gửi lại thì tồn kênh tính lại.</span>
           </p>
         )}
       </Reveal>
@@ -129,7 +143,9 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                             {p.name} · {p.variant}
                           </span>
                         </span>
-                        <span className="r-price">{money(priceOf(p.sku, ch))}</span>
+                        <span className="r-price">
+                          {money(priceOf(p.sku, ch))} · tồn {avail(p.sku)}
+                        </span>
                       </button>
                     </li>
                   ))
@@ -160,8 +176,6 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
             <div className="rows">
               {rows.map((r, idx) => {
                 const p = product(r.sku)
-                const listed = priceOf(r.sku, ch)
-                const off = Math.abs(r.price - listed) > listed * 0.2
                 return (
                   <div className="erow" key={r.sku}>
                     <div className="who">
@@ -169,19 +183,12 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                       <span className="nm">
                         {p.name} · {p.variant}
                       </span>
+                      <span className="nm">Tồn kênh {avail(r.sku)}</span>
                     </div>
 
-                    <div className="field price-f">
-                      <label className="sr" htmlFor={`p${idx}`}>
-                        Giá bán dòng {idx + 1}
-                      </label>
-                      <NumInput
-                        id={`p${idx}`}
-                        className="input num"
-                        value={r.price}
-                        disabled={locked}
-                        onCommit={(v) => patch(idx, { price: v, override: v !== listed })}
-                      />
+                    <div className="price-f price-static">
+                      <span className="k">Giá kênh</span>
+                      <span className="v">{money(r.price)}</span>
                     </div>
 
                     <div className="stepper">
@@ -211,12 +218,6 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
 
                     <div className="line">
                       {money(r.price * r.qty)}
-                      {off && (
-                        <>
-                          <br />
-                          <span className="flag">Giá lệch</span>
-                        </>
-                      )}
                     </div>
 
                     {locked ? (

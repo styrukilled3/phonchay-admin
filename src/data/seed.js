@@ -36,8 +36,9 @@ export function priceOf(sku, chId) {
 }
 
 // ---------- Kho ----------
-// Tồn theo SKU rồi theo kênh: stock[sku][chId]. Số mẫu, bán ra chưa trừ tồn trong bản demo.
-// Dưới LOW_BELOW tổng tồn của SKU là "sắp hết", bằng 0 là "hết hàng".
+// Hai tầng: kho tổng wh[sku] (owner nhập hàng) và tồn từng kênh stock[sku][chId]
+// (có được khi owner duyệt yêu cầu lấy hàng; bán ra thì trừ tồn kênh).
+// Kho tổng dưới LOW_BELOW là "sắp hết", bằng 0 là "hết hàng". Mọi số ở đây là số mẫu.
 export const LOW_BELOW = 15
 
 const STOCK_SEED = {
@@ -53,6 +54,21 @@ const STOCK_SEED = {
 
 export function initialStock() {
   return Object.fromEntries(Object.entries(STOCK_SEED).map(([sku, m]) => [sku, { ...m }]))
+}
+
+const WH_SEED = {
+  'PC-TEE-PHO-BLK-M': 140,
+  'PC-TEE-PHO-BLK-L': 120,
+  'PC-TEE-PHO-WHT-M': 8,
+  'PC-HOO-UOM-CRM-XL': 60,
+  'PC-HOO-UOM-BLK-L': 5,
+  'PC-CAP-SEN-BLK-OS': 180,
+  'PC-TOT-CHO-NAT-OS': 0,
+  'PC-SHO-DEM-IND-32': 45,
+}
+
+export function initialWarehouse() {
+  return { ...WH_SEED }
 }
 
 export const RECEIPTS_SEED = [
@@ -161,4 +177,42 @@ export const LOCK_FROM = DATES[DATES.length - 6]
 
 export function isLocked(dk) {
   return dk < LOCK_FROM
+}
+
+// Yêu cầu lấy hàng từ kho tổng xuống kênh: pending | approved | rejected
+export function initialRequests() {
+  return [
+    {
+      id: 'YC-0012',
+      ch: 'SPF',
+      date: DATES[DATES.length - 1],
+      status: 'pending',
+      lines: [
+        { sku: 'PC-CAP-SEN-BLK-OS', qty: 20 },
+        { sku: 'PC-TEE-PHO-BLK-L', qty: 10 },
+      ],
+    },
+  ]
+}
+
+// Báo cáo bán của một ngày/kênh thay thế dữ liệu cũ của ngày đó, từ đó doanh thu kênh và tổng tự tính lại
+export function setDayLines(date, chId, rows) {
+  for (let i = LINES.length - 1; i >= 0; i--) {
+    if (LINES[i].date === date && LINES[i].ch === chId) LINES.splice(i, 1)
+  }
+  const c = channel(chId)
+  rows.forEach((r) => {
+    if (r.qty <= 0) return
+    LINES.push({
+      date,
+      ch: chId,
+      sku: r.sku,
+      qty: r.qty,
+      price: priceOf(r.sku, chId),
+      discount: 0,
+      fee: c.fee,
+      cost: product(r.sku).cost,
+      type: 'sale',
+    })
+  })
 }
