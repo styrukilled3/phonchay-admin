@@ -333,13 +333,15 @@ tfoot td {
   color: var(--ink-3);
 }
 
-.kpi-hero .lbl {
+/* Biến thể hero phải thắng .kpi .lbl và .kpi .val-exact đứng sau nó,
+   nên nhân đôi class để nâng độ ưu tiên thay vì dựa vào thứ tự. */
+.kpi.kpi-hero .lbl {
   color: color-mix(in oklch, var(--accent-ink) 80%, transparent);
 }
 
 /* Số đầy đủ trên nền coral phải là màu đặc: pha trong suốt hay opacity
    đều trộn ngược vào nền và tụt tương phản xuống dưới ngưỡng đọc */
-.kpi-hero .val-exact {
+.kpi.kpi-hero .val-exact {
   color: var(--accent-ink);
   font-weight: 500;
 }
