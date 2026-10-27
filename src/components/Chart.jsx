@@ -60,7 +60,7 @@ export function StackedArea({ dates }) {
     boundaries.push(dates.map((_, i) => [x(i), y(running[i])]))
   })
 
-  const ticks = [0, 1, 2, 3].map((t) => (max * t) / 3)
+  const ticks = [0, 1, 2, 3, 4].map((t) => (max * t) / 4)
   const lastTop = boundaries[boundaries.length - 1][dates.length - 1]
 
   return (

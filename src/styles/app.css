@@ -333,9 +333,14 @@ tfoot td {
   color: var(--ink-3);
 }
 
-.kpi-hero .lbl,
+.kpi-hero .lbl {
+  color: color-mix(in oklch, var(--accent-ink) 80%, transparent);
+}
+
+/* Số đầy đủ trên nền coral phải là màu đặc, pha trong suốt là mất đọc */
 .kpi-hero .val-exact {
-  color: color-mix(in oklch, var(--accent-ink) 72%, transparent);
+  color: var(--accent-ink);
+  opacity: 0.85;
 }
 
 .kpi .val {

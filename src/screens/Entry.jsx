@@ -264,13 +264,13 @@ export default function Entry({ role, date, setDate, ch, setCh, rows, setRows, s
                 <>
                   <div className="t">
                     <span className="lbl">Phí kênh {pct(chn.fee)}</span>
-                    <span className="v" style={{ color: 'var(--danger)' }}>
+                    <span className="v" style={{ color: 'var(--down)' }}>
                       −{money(fee)}
                     </span>
                   </div>
                   <div className="t">
                     <span className="lbl">Lãi gộp</span>
-                    <span className="v" style={{ color: 'var(--success)' }}>
+                    <span className="v" style={{ color: 'var(--up)' }}>
                       {money(sub - fee - cogs)}
                     </span>
                   </div>
