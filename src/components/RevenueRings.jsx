@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 
 const SIZE = 300
 const C = SIZE / 2
-const STROKE = 17
-const GAP = 7
-const R0 = C - STROKE / 2 - 4
+const STROKE = 13
+const GAP = 5
+const R0 = C - STROKE / 2 - 3
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
@@ -102,7 +102,7 @@ export default function RevenueRings({ rings, total, center }) {
                 opacity={p > 0.002 ? 1 : 0}
               />
               <g transform={`rotate(${p * 360} ${C} ${C})`} opacity={p > 0.002 ? 1 : 0}>
-                <circle cx={C} cy={C - radius} r={3.2} fill="var(--ink)" />
+                <circle cx={C} cy={C - radius} r={2.6} fill="var(--ink)" />
               </g>
             </g>
           )

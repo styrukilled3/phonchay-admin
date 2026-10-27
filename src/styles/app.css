@@ -2221,7 +2221,7 @@ svg.area {
 }
 
 .rings-center b {
-  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
   font-weight: 700;
   line-height: 1.1;
 }
