@@ -1850,11 +1850,10 @@ svg.area {
 
   .np-side {
     position: static;
-    order: -1;
   }
 
   .np-ch-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .np-ch-name {
@@ -1866,8 +1865,18 @@ svg.area {
   width: 100%;
 }
 
+.rs-cell .stepper {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.rs-cell .stepper button {
+  width: 100%;
+}
+
 .rs-cell .stepper input {
-  flex: 1;
-  width: auto;
+  width: 100%;
   min-width: 0;
 }
