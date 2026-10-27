@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 const SIZE = 300
-const C = SIZE / 2
-const STROKE = 13
-const GAP = 5
-const R0 = C - STROKE / 2 - 3
+const STROKE = 15
+const GAP = 6
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
 
-/* Vòng đồng tâm chạy theo cuộn trang (scrub): mỗi kênh một vòng theo màu kênh, độ dài = doanh thu / mục tiêu.
+/* Vòng đồng tâm chạy theo cuộn trang (scrub): mỗi kênh một vòng theo màu kênh, gradient đậm sang nhạt dọc cung, độ dài = doanh thu so với kênh cao nhất.
    Cuộn xuống thì vòng thu dần khi biểu đồ trôi khỏi màn hình, cuộn lên thì vòng đầy lại; vào màn hình từ dưới lên
    cũng vẽ dần. Giá trị hiển thị lerp theo mục tiêu nên không giật, đổi khoảng ngày cũng chạy mượt.
    `center(shownTotal)` vẽ số ở giữa theo cùng tiến độ. */
@@ -79,35 +77,28 @@ export default function RevenueRings({ rings, total, center }) {
   }, [rings, total])
 
   return (
-    <div className="rings" ref={wrap}>
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Doanh thu từng kênh so với mục tiêu">
-        {rings.map((r, i) => {
-          const radius = R0 - i * (STROKE + GAP)
-          const len = 2 * Math.PI * radius
-          const p = shown.current.pcts[i] ?? 0
-          return (
-            <g key={r.id} style={{ '--ch': `var(${r.v})` }}>
-              <circle className="ring-track" cx={C} cy={C} r={radius} strokeWidth={STROKE} fill="none" />
-              <circle
-                className="ring-val"
-                cx={C}
-                cy={C}
-                r={radius}
-                strokeWidth={STROKE}
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={len}
-                strokeDashoffset={len * (1 - p)}
-                transform={`rotate(-90 ${C} ${C})`}
-                opacity={p > 0.002 ? 1 : 0}
-              />
-              <g transform={`rotate(${p * 360} ${C} ${C})`} opacity={p > 0.002 ? 1 : 0}>
-                <circle cx={C} cy={C - radius} r={2.6} fill="var(--ink)" />
-              </g>
-            </g>
-          )
-        })}
-      </svg>
+    <div className="rings" ref={wrap} role="img" aria-label="Doanh thu từng kênh, vòng ngoài là kênh bán nhiều nhất">
+      {rings.map((r, i) => {
+        const p = shown.current.pcts[i] ?? 0
+        const inset = ((i * (STROKE + GAP) + 3) / SIZE) * 100
+        const diameter = SIZE - 2 * (i * (STROKE + GAP) + 3)
+        const hole = ((diameter / 2 - STROKE) / (diameter / 2)) * 100
+        const cap = (STROKE / diameter) * 100
+        return (
+          <div
+            key={r.id}
+            className="ring"
+            style={{ '--ch': `var(${r.v})`, '--p': p, '--hole': `${hole}%`, '--cap': `${cap}%`, inset: `${inset}%` }}
+          >
+            <i className="ring-track" />
+            <i className="ring-arc" />
+            <i className="ring-dot is-start" style={{ opacity: p > 0.004 ? 1 : 0 }} />
+            <i className="ring-turn" style={{ transform: `rotate(${p * 360}deg)`, opacity: p > 0.004 ? 1 : 0 }}>
+              <i className="ring-dot is-end" />
+            </i>
+          </div>
+        )
+      })}
       <div className="rings-center">{center(shown.current.total)}</div>
     </div>
   )

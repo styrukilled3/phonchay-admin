@@ -7,7 +7,6 @@ import {
   channel,
   initialRequests,
   initialStock,
-  initialTargets,
   initialWarehouse,
   isLocked,
   priceOf,
@@ -71,7 +70,6 @@ export default function App() {
   const [sent, setSent] = useState({})
   const [stock, setStock] = useState(initialStock)
   const [wh, setWh] = useState(initialWarehouse)
-  const [targets, setTargets] = useState(initialTargets)
   const [requests, setRequests] = useState(initialRequests)
   const [sentRows, setSentRows] = useState({}) // key ngày|kênh -> dòng đã gửi, để tính lại tồn khi gửi lại
   const [receipts, setReceipts] = useState(RECEIPTS_SEED)
@@ -322,7 +320,7 @@ export default function App() {
                   onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
                 />
               ) : (
-                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} stock={stock} targets={targets} setTargets={setTargets} />
+                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} stock={stock} />
               ))}
             {active.id === 'warehouse' &&
               (inWh === 'restock' ? (

@@ -2195,13 +2195,59 @@ svg.area {
   height: 100%;
 }
 
-.ring-track {
-  stroke: color-mix(in oklch, var(--ch) 18%, var(--surface-2));
+.ring {
+  position: absolute;
+  --dark: color-mix(in oklch, var(--ch), black 52%);
+  --light: color-mix(in oklch, var(--ch), white 38%);
+  --ring-mask: radial-gradient(farthest-side, transparent var(--hole), #000 calc(var(--hole) + 0.4%));
 }
 
-.ring-val {
-  stroke: var(--ch);
-  filter: drop-shadow(0 0 5px color-mix(in oklch, var(--ch) 50%, transparent));
+.ring > i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 50%;
+}
+
+.ring-track {
+  background: color-mix(in oklch, var(--ch) 16%, var(--surface-2));
+  -webkit-mask-image: var(--ring-mask);
+  mask-image: var(--ring-mask);
+}
+
+/* Cung màu: gradient conic đậm sang nhạt trải đúng độ dài cung, cắt bằng mask conic theo --p */
+.ring-arc {
+  background: conic-gradient(from 0deg, var(--dark) 0deg, var(--light) calc(var(--p) * 360deg));
+  -webkit-mask-image: var(--ring-mask), conic-gradient(#000 calc(var(--p) * 360deg), transparent 0);
+  mask-image: var(--ring-mask), conic-gradient(#000 calc(var(--p) * 360deg), transparent 0);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--ch) 45%, transparent));
+}
+
+/* Hai đầu cung bo tròn: chấm đầu màu đậm, chấm cuối màu nhạt quay theo cung */
+.ring-turn {
+  position: absolute;
+  inset: 0;
+}
+
+.ring .ring-dot {
+  position: absolute;
+  inset: auto;
+  left: 50%;
+  top: 0;
+  width: var(--cap);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+
+.ring-dot.is-start {
+  background: var(--dark);
+}
+
+.ring-dot.is-end {
+  background: var(--light);
 }
 
 .rings-center {

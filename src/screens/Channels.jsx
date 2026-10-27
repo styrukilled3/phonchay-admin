@@ -3,14 +3,14 @@ import { CHANNELS, DATES } from '../data/seed.js'
 import { agg, aggOf, linesIn } from '../lib/calc.js'
 import { compact, dmy, money } from '../lib/format.js'
 import { Sparkline } from '../components/Chart.jsx'
-import { NumInput, StatusChip } from '../components/bits.jsx'
+import { StatusChip } from '../components/bits.jsx'
 import RevenueRings from '../components/RevenueRings.jsx'
 import CountUp from '../components/CountUp.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { chUnits } from '../lib/stock.js'
 
 
-export default function Channels({ role, date, statusOf, onOpen, stock, targets, setTargets }) {
+export default function Channels({ role, date, statusOf, onOpen, stock }) {
   const [range, setRange] = useState(14)
   const TREND_DAYS = range
   const trend = DATES.slice(-TREND_DAYS)
@@ -24,13 +24,16 @@ export default function Channels({ role, date, statusOf, onOpen, stock, targets,
   })).sort((a, b) => b.period.gross - a.period.gross)
 
   const sum = agg(linesIn(trend))
-  // Mục tiêu theo tháng quy ra đúng số ngày đang xem
-  const rings = rows.map((r) => {
-    const goal = (targets[r.c.id] * TREND_DAYS) / 30
-    return { id: r.c.id, v: r.c.v, name: r.c.name, gross: r.period.gross, pct: r.period.gross / goal }
-  })
-  const overall =
-    sum.gross / (CHANNELS.reduce((a, c) => a + targets[c.id], 0) * (TREND_DAYS / 30))
+  // Độ dài vòng so với kênh cao nhất (kênh đầu = đầy vòng), số % trong chú thích là tỷ trọng trên tổng
+  const top = Math.max(1, ...rows.map((r) => r.period.gross))
+  const rings = rows.map((r) => ({
+    id: r.c.id,
+    v: r.c.v,
+    name: r.c.name,
+    gross: r.period.gross,
+    pct: r.period.gross / top,
+    share: sum.gross ? r.period.gross / sum.gross : 0,
+  }))
   const sumToday = agg(linesIn([date]))
 
   return (
@@ -71,24 +74,11 @@ export default function Channels({ role, date, statusOf, onOpen, stock, targets,
                 <span className="sw" />
                 <span className="nm">{r.name}</span>
                 <span className="amt">{compact(r.gross)}</span>
-                <span className="pc">{Math.round(r.pct * 100)}%</span>
-                {role === 'owner' && (
-                  <label className="tg">
-                    <span className="sr">Mục tiêu tháng kênh {r.name}, đơn vị triệu</span>
-                    <NumInput
-                      className="input"
-                      value={Math.round(targets[r.id] / 1e6)}
-                      onCommit={(n) => setTargets((t) => ({ ...t, [r.id]: Math.max(1, n) * 1e6 }))}
-                    />
-                    <span aria-hidden="true">tr</span>
-                  </label>
-                )}
+                <span className="pc">{Math.round(r.share * 100)}%</span>
               </li>
             ))}
           </ul>
-          <p className="rev-note">
-            Vòng là phần trăm so với mục tiêu tháng của kênh{role === 'owner' ? ', sửa số ở cột cuối' : ''}.
-          </p>
+          <p className="rev-note">Vòng dài nhất là kênh bán nhiều nhất, các vòng còn lại so với nó. Phần trăm là tỷ trọng trên tổng.</p>
         </div>
 
         <RevenueRings
@@ -98,7 +88,7 @@ export default function Channels({ role, date, statusOf, onOpen, stock, targets,
             <>
               <span className="k">Tổng</span>
               <b>{compact(v)}</b>
-              <span className="s">{Math.round((overall * v) / (sum.gross || 1) * 100)}% mục tiêu</span>
+              <span className="s">{sum.qty} sp bán</span>
             </>
           )}
         />
