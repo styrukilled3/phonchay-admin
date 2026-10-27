@@ -24,13 +24,14 @@ export default function RevenueRings({ rings, total, center }) {
   useEffect(() => {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-    // Tiến độ theo vị trí cuộn: 0 khi vừa lọt mép dưới, 1 khi nằm giữa màn hình, về 0 khi trôi ra mép trên
+    // Tiến độ theo vị trí cuộn: 0 khi vừa lọt mép dưới, 1 khi nằm trong khung nhìn, thu về 0 khi trôi ra mép trên
     function scrollT() {
       const r = wrap.current.getBoundingClientRect()
       const vh = window.innerHeight
       const tIn = clamp01((vh * 0.95 - r.top) / (vh * 0.55))
-      const tOut = clamp01((r.bottom - 48) / (r.height * 0.75))
-      return easeOutCubic(Math.min(tIn, tOut))
+      // Thu dần ngay khi cuộn đi: đầy khi đỉnh vòng còn cách mép trên >= 170px, về 0 khi đã trôi 30% chiều cao
+      const tOut = clamp01((r.top + r.height * 0.3) / (170 + r.height * 0.3))
+      return Math.min(easeOutCubic(tIn), tOut)
     }
 
     function frame() {
