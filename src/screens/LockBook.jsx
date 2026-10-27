@@ -3,18 +3,18 @@ import { aggOf } from '../lib/calc.js'
 import { compact, dm, dmy } from '../lib/format.js'
 
 const LOG = [
-  ['27/10 16:42', 'Trang (staff)', 'Sửa số lượng', 'PC-TEE-PHO-BLK-M · SP', '3', '4'],
-  ['27/10 16:40', 'Trang (staff)', 'Thêm dòng', 'PC-CAP-SEN-BLK-OS · SP', '—', '2 × 199.000 ₫'],
+  ['27/10 16:42', 'Trang (staff)', 'Sửa số lượng', 'PC-TEE-PHO-BLK-M · 808', '3', '4'],
+  ['27/10 16:40', 'Trang (staff)', 'Thêm dòng', 'PC-CAP-SEN-BLK-OS · 808', '—', '2 × 189.000 ₫'],
   ['27/10 09:15', 'STY (owner)', 'Chốt ngày', dmy(DATES[DATES.length - 7]), 'đang mở', 'đã chốt'],
   [
     '26/10 20:03',
     'Khoa (staff)',
     'Ghi đè giá',
-    'PC-HOO-UOM-CRM-XL · ZL',
-    '539.000 ₫',
+    'PC-HOO-UOM-CRM-XL · HAIPHONG',
+    '549.000 ₫',
     '470.000 ₫ (lý do: khách quen)',
   ],
-  ['26/10 19:58', 'Khoa (staff)', 'Gửi ngày', '26/10 · TT', 'nháp', 'đã gửi'],
+  ['26/10 19:58', 'Khoa (staff)', 'Gửi ngày', '26/10 · SHOPPE', 'nháp', 'đã gửi'],
 ]
 
 export default function LockBook() {

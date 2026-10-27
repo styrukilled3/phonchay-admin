@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DATES, isLocked, priceOf } from './data/seed.js'
+import { CHANNELS, DATES, isLocked, priceOf } from './data/seed.js'
 import { dmy } from './lib/format.js'
 import Entry from './screens/Entry.jsx'
 import History from './screens/History.jsx'
@@ -16,12 +16,13 @@ const SCREENS = [
 ]
 
 const TODAY = DATES[DATES.length - 1]
+const FIRST_CH = CHANNELS[0].id
 
 // Mở app ở trạng thái đang làm việc thật, không phải vỏ rỗng
 const INITIAL_DRAFTS = {
-  [`${TODAY}|SP`]: [
-    { sku: 'PC-TEE-PHO-BLK-M', qty: 4, price: priceOf('PC-TEE-PHO-BLK-M', 'SP'), override: false },
-    { sku: 'PC-CAP-SEN-BLK-OS', qty: 2, price: priceOf('PC-CAP-SEN-BLK-OS', 'SP'), override: false },
+  [`${TODAY}|${FIRST_CH}`]: [
+    { sku: 'PC-TEE-PHO-BLK-M', qty: 4, price: priceOf('PC-TEE-PHO-BLK-M', FIRST_CH), override: false },
+    { sku: 'PC-CAP-SEN-BLK-OS', qty: 2, price: priceOf('PC-CAP-SEN-BLK-OS', FIRST_CH), override: false },
   ],
 }
 
@@ -44,7 +45,7 @@ export default function App() {
   const [role, setRole] = useState('staff')
   const [screen, setScreen] = useState('entry')
   const [date, setDate] = useState(TODAY)
-  const [ch, setCh] = useState('SP')
+  const [ch, setCh] = useState(FIRST_CH)
   const [range, setRange] = useState(30)
   const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
   const [sent, setSent] = useState({})

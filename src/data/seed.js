@@ -1,11 +1,13 @@
 // Dữ liệu mẫu cho bản demo. Thay bằng Supabase ở bước sau.
 
+// fee = % phí hoặc hoa hồng kênh thu trên doanh thu gộp.
+// Sàn ăn phí cao, kênh trực tiếp bằng 0. Sửa số ở đây khi biết phí thật.
 export const CHANNELS = [
-  { id: 'SP', name: 'Shopee', fee: 0.11, v: '--ch-1' },
-  { id: 'TT', name: 'TikTok Shop', fee: 0.09, v: '--ch-2' },
-  { id: 'WEB', name: 'Website', fee: 0.02, v: '--ch-3' },
-  { id: 'STORE', name: 'Cửa hàng', fee: 0.0, v: '--ch-4' },
-  { id: 'ZL', name: 'Inbox / Zalo', fee: 0.0, v: '--ch-5' },
+  { id: '808', code: '808', name: '808', fee: 0.0, v: '--ch-1' },
+  { id: 'TLD', code: 'TLD', name: 'THAILAD', fee: 0.0, v: '--ch-2' },
+  { id: 'HP', code: 'HP', name: 'HAIPHONG', fee: 0.0, v: '--ch-3' },
+  { id: 'SHP', code: 'SHP', name: 'SHOPPE', fee: 0.11, v: '--ch-4' },
+  { id: 'SPF', code: 'SPF', name: 'SHOPIFY', fee: 0.02, v: '--ch-5' },
 ]
 
 export const PRODUCTS = [
@@ -20,7 +22,7 @@ export const PRODUCTS = [
 ]
 
 // Sàn gánh phí nên giá niêm yết cộng thêm, kênh trực tiếp bớt lại
-const CH_ADJ = { SP: 10000, TT: 0, WEB: -10000, STORE: 0, ZL: -20000 }
+const CH_ADJ = { '808': 0, TLD: 0, HP: -10000, SHP: 10000, SPF: -10000 }
 
 export function product(sku) {
   return PRODUCTS.find((p) => p.sku === sku)
@@ -70,7 +72,7 @@ TODAY.setHours(0, 0, 0, 0)
 export const DATES = Array.from({ length: DAYS }, (_, i) => dayKey(addDays(TODAY, -(DAYS - 1 - i))))
 
 // Mỗi kênh một nhịp bán khác nhau để biểu đồ có hình, không phải nhiễu đều
-const CH_WEIGHT = { SP: 1.0, TT: 0.85, WEB: 0.45, STORE: 0.6, ZL: 0.35 }
+const CH_WEIGHT = { '808': 1.0, TLD: 0.6, HP: 0.5, SHP: 0.9, SPF: 0.4 }
 
 function generate() {
   const rand = mulberry32(20261027)

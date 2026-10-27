@@ -2,6 +2,9 @@ import { CHANNELS, PRODUCTS, priceOf } from '../data/seed.js'
 import { compact, pct } from '../lib/format.js'
 
 export default function Products() {
+  // Kênh ăn phí nặng nhất: nhìn margin ở đây là thấy SKU nào mỏng lãi nhất
+  const worstFee = CHANNELS.reduce((a, c) => (c.fee > a.fee ? c : a), CHANNELS[0])
+
   return (
     <section className="card">
       <header>
@@ -19,16 +22,16 @@ export default function Products() {
               <th className="num">Giá vốn</th>
               {CHANNELS.map((c) => (
                 <th key={c.id} className="num">
-                  {c.id}
+                  {c.code}
                 </th>
               ))}
-              <th className="num">Margin SP</th>
+              <th className="num">Margin {worstFee.code}</th>
             </tr>
           </thead>
           <tbody>
             {PRODUCTS.map((p) => {
-              const spPrice = priceOf(p.sku, 'SP')
-              const spNet = spPrice - spPrice * 0.11
+              const spPrice = priceOf(p.sku, worstFee.id)
+              const spNet = spPrice - spPrice * worstFee.fee
               return (
                 <tr key={p.sku}>
                   <td className="mono">{p.sku}</td>
@@ -49,7 +52,8 @@ export default function Products() {
         </table>
       </div>
       <p className="hint">
-        Cột Margin SP tính trên kênh Shopee sau phí 11%, để thấy SKU nào mỏng lãi nhất trên sàn.
+        Cột Margin {worstFee.code} tính trên kênh {worstFee.name} sau phí {pct(worstFee.fee)}, để thấy
+        SKU nào mỏng lãi nhất.
       </p>
     </section>
   )

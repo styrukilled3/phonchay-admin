@@ -28,7 +28,7 @@ export function Tag({ ch, children }) {
   return (
     <span className="tag" style={{ '--ch': `var(${ch.v})` }}>
       <span className="sw" />
-      {children ?? ch.id}
+      {children ?? ch.code}
     </span>
   )
 }

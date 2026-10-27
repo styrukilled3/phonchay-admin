@@ -399,6 +399,178 @@ tfoot td {
   color: color-mix(in oklch, var(--accent-ink) 70%, transparent);
 }
 
+/* ---------- Khối có tiêu đề nhưng không đóng khung ---------- */
+.block {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.block-head h2 {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+/* ---------- Ô lớn từng kênh ---------- */
+.ch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: var(--space-4);
+}
+
+.ch-card {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  /* Mỗi kênh ám một chút màu riêng để phân biệt mà không ồn */
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklch, var(--ch) 12%, var(--surface)) 0%,
+    var(--surface) 62%
+  );
+}
+
+.ch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ch-name {
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ch);
+}
+
+.ch-share {
+  font-size: var(--text-2xs);
+  color: var(--ink-3);
+}
+
+.ch-main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ch-net {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ch-net .v {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.ch-net .l {
+  font-size: var(--text-2xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.ch-stats > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ch-stats dt {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.ch-stats dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ch-stats dd.is-up {
+  color: var(--up);
+}
+
+.ch-stats dd.is-down {
+  color: var(--down);
+}
+
+/* Ô dẫn đầu: chiếm nguyên hàng, nền gradient coral */
+.ch-card.is-top {
+  grid-column: 1 / -1;
+  background: var(--accent-grad);
+  border-color: transparent;
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-glow);
+}
+
+.ch-card.is-top .ch-name,
+.ch-card.is-top .ch-net .v {
+  color: var(--accent-ink);
+}
+
+.ch-card.is-top .ch-share,
+.ch-card.is-top .ch-net .l,
+.ch-card.is-top .ch-stats dt {
+  color: color-mix(in oklch, var(--accent-ink) 78%, transparent);
+}
+
+.ch-card.is-top .ch-stats {
+  border-top-color: color-mix(in oklch, var(--accent-ink) 25%, transparent);
+}
+
+.ch-card.is-top .ch-stats dd {
+  color: var(--accent-ink);
+}
+
+.ch-card.is-top .ch-net .v {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+}
+
+.ch-card.is-top .spark {
+  width: 180px;
+  height: 44px;
+}
+
+@media (min-width: 720px) {
+  .ch-card.is-top .ch-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* ---------- Chart ---------- */
 .chart-head {
   display: flex;

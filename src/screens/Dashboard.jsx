@@ -71,72 +71,61 @@ export default function Dashboard({ range, setRange }) {
         </p>
       </section>
 
-      <section className="card">
-        <header>
-          <h2>So sánh 5 kênh</h2>
-          <span className="hint">Xếp theo net. Margin thấp là kênh ăn phí nhiều.</span>
-        </header>
-        <div className="tw">
-          <table>
-            <thead>
-              <tr>
-                <th>Kênh</th>
-                <th className="num">Gộp</th>
-                <th className="num">Giảm giá</th>
-                <th className="num">Hoàn</th>
-                <th className="num">Phí</th>
-                <th className="num">Net</th>
-                <th className="num">Giá vốn</th>
-                <th className="num">Margin</th>
-                <th className="num">Tỷ trọng</th>
-                <th>Xu hướng</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.c.id}>
-                  <td>
-                    <Tag ch={r.c}>{r.c.id}</Tag> {r.c.name}
-                  </td>
-                  <td className="num">{compact(r.a.gross)}</td>
-                  <td className="num">{r.a.discount ? `−${compact(r.a.discount)}` : '—'}</td>
-                  <td className="num">{r.a.refund ? `−${compact(r.a.refund)}` : '—'}</td>
-                  <td className="num">{r.a.fee ? `−${compact(r.a.fee)}` : '—'}</td>
-                  <td className="num">
-                    <b>{compact(r.a.net)}</b>
-                  </td>
-                  <td className="num">{compact(r.a.cogs)}</td>
-                  <td
-                    className="num"
-                    style={{ color: r.a.margin < 0.25 ? 'var(--down)' : 'var(--up)' }}
-                  >
-                    <b>{pct(r.a.margin)}</b>
-                  </td>
-                  <td className="num">{pct(cur.net > 0 ? r.a.net / cur.net : 0)}</td>
-                  <td>
-                    <Sparkline
-                      series={dates.map((dk) => aggOf([dk], r.c.id).gross)}
-                      color={`var(${r.c.v})`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Tổng</td>
-                <td className="num">{compact(cur.gross)}</td>
-                <td className="num">−{compact(cur.discount)}</td>
-                <td className="num">−{compact(cur.refund)}</td>
-                <td className="num">−{compact(cur.fee)}</td>
-                <td className="num">{compact(cur.net)}</td>
-                <td className="num">{compact(cur.cogs)}</td>
-                <td className="num">{pct(cur.margin)}</td>
-                <td className="num">100%</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
+      <section className="block">
+        <div className="block-head">
+          <h2>5 kênh bán</h2>
+          <span className="hint">Xếp theo net. Margin thấp là kênh ăn phí và hoàn nhiều.</span>
+        </div>
+
+        <div className="ch-grid">
+          {rows.map((r, i) => {
+            const top = i === 0
+            const series = dates.map((dk) => aggOf([dk], r.c.id).gross)
+            return (
+              <article
+                key={r.c.id}
+                className={`ch-card${top ? ' is-top' : ''}`}
+                style={{ '--ch': `var(${r.c.v})` }}
+              >
+                <div className="ch-head">
+                  <span className="ch-name">{r.c.name}</span>
+                  <span className="ch-share">{pct(cur.net > 0 ? r.a.net / cur.net : 0)} tổng net</span>
+                </div>
+
+                <div className="ch-main">
+                  <div className="ch-net">
+                    <span className="v">{compact(r.a.net)}</span>
+                    <span className="l">Doanh thu net · {money(r.a.net)}</span>
+                  </div>
+                  <Sparkline
+                    series={series}
+                    color={top ? 'var(--accent-ink)' : `var(${r.c.v})`}
+                  />
+                </div>
+
+                <dl className="ch-stats">
+                  <div>
+                    <dt>Gộp</dt>
+                    <dd>{compact(r.a.gross)}</dd>
+                  </div>
+                  <div>
+                    <dt>Phí {pct(r.c.fee)}</dt>
+                    <dd>{r.a.fee ? `−${compact(r.a.fee)}` : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Hoàn</dt>
+                    <dd>{r.a.refund ? `−${compact(r.a.refund)}` : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Margin</dt>
+                    <dd className={top ? '' : r.a.margin < 0.25 ? 'is-down' : 'is-up'}>
+                      {pct(r.a.margin)}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            )
+          })}
         </div>
       </section>
 

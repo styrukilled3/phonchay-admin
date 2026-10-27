@@ -20,7 +20,7 @@ export default function History({ statusOf }) {
               <th>Trạng thái</th>
               {CHANNELS.map((c) => (
                 <th key={c.id} className="num">
-                  {c.id}
+                  {c.code}
                 </th>
               ))}
               <th className="num">Tổng gộp</th>
@@ -34,7 +34,7 @@ export default function History({ statusOf }) {
                 <tr key={dk}>
                   <td className="mono">{dmy(dk)}</td>
                   <td>
-                    <StatusChip status={statusOf(dk, 'SP')} />
+                    <StatusChip status={statusOf(dk, CHANNELS[0].id)} />
                   </td>
                   {cells.map((v, i) => (
                     <td className="num" key={CHANNELS[i].id}>
