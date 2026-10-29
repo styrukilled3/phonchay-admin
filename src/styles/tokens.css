@@ -20,10 +20,10 @@
 
   /* Accent là trắng: nút chính pill trắng chữ đen, khối nổi là khối trắng */
   --accent: oklch(0.98 0 0);
-  --accent-2: oklch(0.88 0 0);
+  --accent-2: oklch(0.98 0 0);
   --accent-grad: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
   --accent-ink: oklch(0.14 0 0);
-  --accent-glow: oklch(1 0 0 / 0.16);
+  --accent-glow: transparent;
   --focus: oklch(0.98 0 0);
 
   /* Màu dữ liệu giữ lại nhưng dịu (chroma ~0.09), để UI mono còn dữ liệu tách được */
@@ -31,12 +31,12 @@
   --down: oklch(0.72 0.12 22);
   --danger: oklch(0.72 0.12 22);
 
-  /* 5 kênh: tách hue rõ, độ sáng gần nhau, chroma thấp */
-  --ch-1: oklch(0.72 0.1 28);
-  --ch-2: oklch(0.8 0.1 85);
-  --ch-3: oklch(0.72 0.09 320);
-  --ch-4: oklch(0.78 0.09 195);
-  --ch-5: oklch(0.7 0.1 262);
+  /* 5 kênh: năm bậc xám, phân biệt bằng độ sáng + nhãn. Thấp nhất vẫn >3:1 trên surface */
+  --ch-1: oklch(0.96 0 0);
+  --ch-2: oklch(0.84 0 0);
+  --ch-3: oklch(0.72 0 0);
+  --ch-4: oklch(0.62 0 0);
+  --ch-5: oklch(0.52 0 0);
 
   /* Một họ chữ duy nhất: geometric, dấu tiếng Việt chuẩn.
      Số dùng tabular-nums của chính nó, không cần font mono. */
