@@ -449,7 +449,7 @@ tfoot td {
   font-size: var(--text-md);
   font-weight: 700;
   letter-spacing: 0.03em;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 .ch-share {
@@ -620,7 +620,7 @@ tfoot td {
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.01em;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 .box-main {
@@ -682,7 +682,7 @@ tfoot td {
   gap: var(--space-2);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 /* Box dẫn đầu chiếm nguyên hàng trên */
@@ -773,7 +773,7 @@ tfoot td {
   font-size: clamp(1.75rem, 5vw, 2.5rem);
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 .hero-stats {
@@ -897,7 +897,7 @@ svg.area {
 }
 
 .tabs button[aria-pressed='true'] {
-  color: var(--ch);
+  color: var(--ink);
   font-weight: 600;
   border-color: color-mix(in oklch, var(--ch) 55%, transparent);
   background: color-mix(in oklch, var(--ch) 16%, var(--surface));
@@ -1752,7 +1752,7 @@ svg.area {
 
 .np-ch-name {
   font-weight: 700;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 .np-ch-meta {
@@ -2132,7 +2132,7 @@ svg.area {
 
 .rev-legend .nm {
   font-weight: 600;
-  color: var(--ch);
+  color: var(--ink);
 }
 
 .rev-legend .amt,
