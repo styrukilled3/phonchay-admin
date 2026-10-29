@@ -1,42 +1,42 @@
 /* Design tokens PHONCHAY Admin.
-   Hướng: dark UI, accent coral, bo góc lớn, chiều sâu mềm bằng glow.
+   Hướng: dark UI mono đen-trắng-xám, accent trắng, màu chỉ dành cho dữ liệu, bo góc lớn.
    Đổi giá trị ở đây, không dùng hex thô trong component.
    Chạy `npm run contrast` sau khi đổi màu. */
 :root {
   color-scheme: dark;
 
-  /* Nền tối ngả xanh lạnh, ba bậc để tách lớp */
-  --bg: oklch(0.17 0.012 270);
-  --surface: oklch(0.22 0.014 270);
-  --surface-2: oklch(0.27 0.014 270);
-  --surface-3: oklch(0.32 0.014 270);
+  /* Mono: near-black thuần chroma 0, ba bậc để tách lớp */
+  --bg: oklch(0.14 0 0);
+  --surface: oklch(0.19 0 0);
+  --surface-2: oklch(0.24 0 0);
+  --surface-3: oklch(0.29 0 0);
   /* line: viền trang trí. line-strong: viền control, phải đạt 3:1 trên surface-2 */
-  --line: oklch(0.33 0.012 270);
-  --line-strong: oklch(0.61 0.012 270);
+  --line: oklch(0.30 0 0);
+  --line-strong: oklch(0.60 0 0);
 
-  --ink: oklch(0.97 0.004 270);
-  --ink-2: oklch(0.73 0.012 270);
-  --ink-3: oklch(0.66 0.012 270);
+  --ink: oklch(0.98 0 0);
+  --ink-2: oklch(0.73 0 0);
+  --ink-3: oklch(0.65 0 0);
 
-  /* Accent coral, dùng gradient cho khối chính */
-  --accent: oklch(0.7 0.19 28);
-  --accent-2: oklch(0.76 0.16 48);
-  --accent-grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-  /* Chữ trên nền coral là màu gần đen: trắng chỉ đạt ~2,8:1, không đủ đọc số */
-  --accent-ink: oklch(0.18 0.02 28);
-  --accent-glow: oklch(0.7 0.19 28 / 0.38);
-  --focus: oklch(0.8 0.14 48);
+  /* Accent là trắng: nút chính pill trắng chữ đen, khối nổi là khối trắng */
+  --accent: oklch(0.98 0 0);
+  --accent-2: oklch(0.88 0 0);
+  --accent-grad: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+  --accent-ink: oklch(0.14 0 0);
+  --accent-glow: oklch(1 0 0 / 0.16);
+  --focus: oklch(0.98 0 0);
 
-  --up: oklch(0.8 0.15 165);
-  --down: oklch(0.72 0.18 22);
-  --danger: oklch(0.72 0.18 22);
+  /* Màu dữ liệu giữ lại nhưng dịu (chroma ~0.09), để UI mono còn dữ liệu tách được */
+  --up: oklch(0.8 0.1 165);
+  --down: oklch(0.72 0.12 22);
+  --danger: oklch(0.72 0.12 22);
 
-  /* 5 kênh: coral dẫn đầu, các kênh sau tách hue nhưng giữ độ sáng gần nhau */
-  --ch-1: oklch(0.7 0.19 28);
-  --ch-2: oklch(0.79 0.15 70);
-  --ch-3: oklch(0.72 0.15 320);
-  --ch-4: oklch(0.79 0.12 195);
-  --ch-5: oklch(0.7 0.13 268);
+  /* 5 kênh: tách hue rõ, độ sáng gần nhau, chroma thấp */
+  --ch-1: oklch(0.72 0.1 28);
+  --ch-2: oklch(0.8 0.1 85);
+  --ch-3: oklch(0.72 0.09 320);
+  --ch-4: oklch(0.78 0.09 195);
+  --ch-5: oklch(0.7 0.1 262);
 
   /* Một họ chữ duy nhất: geometric, dấu tiếng Việt chuẩn.
      Số dùng tabular-nums của chính nó, không cần font mono. */
@@ -68,7 +68,7 @@
   --radius-pill: 999px;
 
   --shadow-card: 0 1px 0 oklch(1 0 0 / 0.04) inset;
-  --shadow-pop: 0 18px 40px -12px oklch(0.1 0.02 270 / 0.75);
+  --shadow-pop: 0 18px 40px -12px oklch(0 0 0 / 0.8);
   --shadow-glow: 0 10px 30px -8px var(--accent-glow);
 
   --touch-min: 44px;

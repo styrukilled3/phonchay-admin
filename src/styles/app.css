@@ -2427,3 +2427,7 @@ svg.area {
   .rule-row .np-ch-name { grid-column: 1 / -1; }
   .rule-row .muted { display: none; }
 }
+
+/* Mono: heading siết tracking, nút chính dạng pill */
+h1, h2, h3 { letter-spacing: -0.02em; }
+.btn { border-radius: var(--radius-pill); }
