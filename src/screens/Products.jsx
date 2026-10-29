@@ -1,13 +1,40 @@
-import { CHANNELS, PRODUCTS, needsPrice, priceOf } from '../data/seed.js'
+import { CH_RULE, CHANNELS, PRODUCTS, needsPrice, priceOf } from '../data/seed.js'
 import { compact, pct } from '../lib/format.js'
 import { NumInput } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-export default function Products({ onEdit }) {
+export default function Products({ onEdit, onRule }) {
   // Kênh ăn phí nặng nhất: nhìn margin ở đây là thấy SKU nào mỏng lãi nhất
   const worstFee = CHANNELS.reduce((a, c) => (c.fee > a.fee ? c : a), CHANNELS[0])
 
   return (
+    <>
+    <Reveal as="section" className="card">
+      <header>
+        <h2>Công thức giá kênh</h2>
+        <span className="hint">Giá kênh = giá gốc cộng hoặc trừ. Áp cho hàng chuyển kho từ lúc đổi, hàng đã chuyển giữ giá cũ.</span>
+      </header>
+      <div className="rule-list">
+        {CHANNELS.map((c) => {
+          const r = CH_RULE[c.id]
+          return (
+            <div className="rule-row" key={c.id} style={{ '--ch': `var(${c.v})` }}>
+              <span className="np-ch-name">{c.name}</span>
+              <span className="muted">Giá gốc</span>
+              <select className="input" value={r.sign} aria-label={`Cộng hay trừ ${c.name}`} onChange={(e) => onRule(c.id, { sign: Number(e.target.value) })}>
+                <option value={1}>Cộng</option>
+                <option value={-1}>Trừ</option>
+              </select>
+              <NumInput className="input" value={r.value} onCommit={(n) => onRule(c.id, { value: n })} aria-label={`Giá trị ${c.name}`} />
+              <select className="input" value={r.kind} aria-label={`Đơn vị ${c.name}`} onChange={(e) => onRule(c.id, { kind: e.target.value })}>
+                <option value="amount">đ</option>
+                <option value="pct">%</option>
+              </select>
+            </div>
+          )
+        })}
+      </div>
+    </Reveal>
     <Reveal as="section" className="card">
       <header>
         <h2>Bảng giá SKU × kênh</h2>
@@ -65,5 +92,6 @@ export default function Products({ onEdit }) {
         SKU nào mỏng lãi nhất.
       </p>
     </Reveal>
+    </>
   )
 }

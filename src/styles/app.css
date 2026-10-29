@@ -2413,3 +2413,17 @@ svg.area {
   text-align: right;
   font-size: var(--text-sm);
 }
+
+.rule-list { display: grid; gap: 8px; }
+.rule-row {
+  display: grid;
+  grid-template-columns: 110px auto 96px minmax(0, 140px) 72px;
+  align-items: center;
+  gap: 10px;
+}
+.rule-row .input { height: 36px; }
+@media (max-width: 720px) {
+  .rule-row { grid-template-columns: 1fr 1fr 1fr; }
+  .rule-row .np-ch-name { grid-column: 1 / -1; }
+  .rule-row .muted { display: none; }
+}

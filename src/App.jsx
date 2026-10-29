@@ -11,6 +11,7 @@ import {
   isLocked,
   needsPrice,
   priceOf,
+  setRule,
   product,
   setDayLines,
 } from './data/seed.js'
@@ -242,6 +243,11 @@ export default function App() {
     setPriceVer((v) => v + 1)
   }
 
+  function editRule(chId, patch) {
+    setRule(chId, patch)
+    setPriceVer((v) => v + 1)
+  }
+
   // Gửi ngày: lấy hàng theo lô FIFO, ghi số bán theo giá lô vào doanh thu và trừ tồn kênh
   function sendDay() {
     const prev = sentRows[key] ?? []
@@ -424,7 +430,7 @@ export default function App() {
               ))}
             {active.id === 'history' && <History statusOf={statusOf} role={role} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
-            {active.id === 'products' && <Products onEdit={editProduct} />}
+            {active.id === 'products' && <Products onEdit={editProduct} onRule={editRule} />}
             {active.id === 'lock' && <LockBook />}
           </main>
         </div>

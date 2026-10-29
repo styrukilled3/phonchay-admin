@@ -21,8 +21,27 @@ export const PRODUCTS = [
   { sku: 'PC-SHO-DEM-IND-32', name: 'Short Đêm', variant: 'Indigo / 32', base: 329000, cost: 160000 },
 ]
 
-// Sàn gánh phí nên giá niêm yết cộng thêm, kênh trực tiếp bớt lại
-export const CH_ADJ = { '808': 0, TLD: 0, HP: -10000, SHP: 10000, SPF: -10000 }
+// Công thức giá từng kênh: giá kênh = giá gốc cộng/trừ (số tiền hoặc %). Owner sửa ở màn Sản phẩm.
+// kind: 'amount' (đ) | 'pct' (%), sign: 1 cộng, -1 trừ. Không làm tròn.
+export const CH_RULE = {
+  '808': { kind: 'amount', sign: 1, value: 0 },
+  TLD: { kind: 'amount', sign: 1, value: 0 },
+  HP: { kind: 'amount', sign: -1, value: 10000 },
+  SHP: { kind: 'amount', sign: 1, value: 10000 },
+  SPF: { kind: 'amount', sign: -1, value: 10000 },
+}
+
+export function setRule(chId, patch) {
+  Object.assign(CH_RULE[chId], patch)
+}
+
+export function channelPrice(base, chId) {
+  if (!(base > 0)) return 0
+  const r = CH_RULE[chId]
+  if (!r) return base
+  const delta = r.kind === 'pct' ? (base * r.value) / 100 : r.value
+  return Math.max(0, base + r.sign * delta)
+}
 
 export function product(sku) {
   return PRODUCTS.find((p) => p.sku === sku)
@@ -32,7 +51,7 @@ export function product(sku) {
 export function priceOf(sku, chId) {
   const p = product(sku)
   if (!p || !(p.base > 0)) return 0
-  return p.prices?.[chId] ?? p.base + (CH_ADJ[chId] ?? 0)
+  return p.prices?.[chId] ?? channelPrice(p.base, chId)
 }
 
 // SP nhân viên tạo chưa có giá gốc hoặc giá vốn thì owner phải điền mới duyệt chuyển kho được

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CHANNELS, CH_ADJ, PRODUCTS } from '../data/seed.js'
+import { CHANNELS, PRODUCTS, channelPrice } from '../data/seed.js'
 import { deaccent, money, pct } from '../lib/format.js'
 import { NumInput } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
@@ -139,7 +139,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
               </div>
               <div className="np-ch">
                 {CHANNELS.map((c) => {
-                  const price = base > 0 ? base + (CH_ADJ[c.id] ?? 0) : 0
+                  const price = channelPrice(base, c.id)
                   const margin = price > 0 ? (price * (1 - c.fee) - cost) / price : 0
                   return (
                     <div className="np-ch-row" key={c.id} style={{ '--ch': `var(${c.v})` }}>
