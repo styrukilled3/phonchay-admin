@@ -1,21 +1,20 @@
 import CountUp from './CountUp.jsx'
 
-const N = 64
+const N = 60
 const CX = 150
 const CY = 150
-const R_OUT = 142
+const R_OUT = 144
 const START = 135 // độ, tính từ trục +x theo chiều kim đồng hồ: góc dưới trái
 const SWEEP = 270
 
 /* Vòng vạch kiểu đồng hồ: mỗi vạch thuộc một kênh theo tỷ trọng, màu theo thang xám của kênh.
-   Vạch cao nhất ở đỉnh, thấp dần về hai đầu hở ở đáy. Vào màn hình thì vạch mọc lần lượt. */
+   Mọi vạch cùng độ dài nên vòng tròn đều. Sáng dần theo thứ tự kênh. Vào màn hình thì vạch mọc lần lượt. */
 export default function TickRing({ items, total, label, format }) {
   const sum = items.reduce((s, it) => s + it.value, 0) || 1
   const ticks = Array.from({ length: N }, (_, i) => {
     const u = i / (N - 1)
     const a = ((START + u * SWEEP) * Math.PI) / 180
-    const len = 20 + 18 * Math.sin(Math.PI * u) ** 1.5
-    const r1 = R_OUT - len
+    const r1 = R_OUT - 30
     // Vạch thuộc kênh nào: theo vị trí giữa vạch trên trục tích lũy tỷ trọng
     const pos = (i + 0.5) / N
     let acc = 0

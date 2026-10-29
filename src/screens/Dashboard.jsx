@@ -85,8 +85,7 @@ export default function Dashboard({ range, setRange }) {
               <StackedArea key={range} dates={dates} />
             </div>
             <div className="chart-foot">
-              <span className="swatch-hot" />
-              <span>Tổng mọi kênh</span>
+              <span>Đường chính là tổng mọi kênh. Trỏ vào một ngày để xem từng kênh.</span>
               <div className="legend">
                 {CHANNELS.map((c) => (
                   <Tag key={c.id} ch={c} />
@@ -101,17 +100,17 @@ export default function Dashboard({ range, setRange }) {
             <h3 className="rail-title">Tỷ trọng doanh thu net</h3>
             <TickRing
               key={range}
-              items={rows.map((r) => ({ id: r.c.id, name: r.c.name, v: r.c.v, value: Math.max(0, r.a.net) }))}
+              items={CHANNELS.map((c) => ({ id: c.id, name: c.name, v: c.v, value: Math.max(0, aggOf(dates, c.id).net) }))}
               total={cur.net}
               label="Tổng net"
               format={compact}
             />
             <ul className="tk-legend">
-              {rows.map((r) => (
-                <li key={r.c.id} style={{ '--ch': `var(${r.c.v})` }}>
+              {CHANNELS.map((c) => (
+                <li key={c.id} style={{ '--ch': `var(${c.v})` }}>
                   <span className="sw" />
-                  <span className="nm">{r.c.name}</span>
-                  <span className="pc">{pct(cur.net > 0 ? r.a.net / cur.net : 0)}</span>
+                  <span className="nm">{c.name}</span>
+                  <span className="pc">{pct(cur.net > 0 ? aggOf(dates, c.id).net / cur.net : 0)}</span>
                 </li>
               ))}
             </ul>
