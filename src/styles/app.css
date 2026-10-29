@@ -2532,9 +2532,11 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .tickring .tk { stroke-linecap: butt; }
 .tickring-c {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 56.3%;
+  transform: translateY(-50%);
   display: grid;
-  place-content: center;
   text-align: center;
   gap: 2px;
 }

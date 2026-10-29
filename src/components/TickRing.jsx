@@ -39,7 +39,7 @@ export default function TickRing({ items, total, label, format }) {
 
   return (
     <div className="tickring">
-      <svg viewBox="0 0 300 300" role="img" aria-label={`Tỷ trọng ${items.map((it) => `${it.name} ${Math.round((it.value / sum) * 100)}%`).join(', ')}`}>
+      <svg viewBox="0 8 300 252" role="img" aria-label={`Tỷ trọng ${items.map((it) => `${it.name} ${Math.round((it.value / sum) * 100)}%`).join(', ')}`}>
         {ticks.map((t) => (
           <line
             key={t.i}
