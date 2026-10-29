@@ -2308,7 +2308,10 @@ svg.area {
 }
 
 .np-panel {
-  padding: var(--space-5);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .np-inline-head {

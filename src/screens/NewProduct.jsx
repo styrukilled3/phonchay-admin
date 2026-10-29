@@ -92,7 +92,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
 
           <Reveal as="section" className="card">
             <header>
-              <h2>Giá vốn và giá bán theo kênh</h2>
+              <h2>{owner ? 'Giá vốn và giá bán theo kênh' : 'Giá bán theo kênh'}</h2>
               <span className="hint">
                 Để trống giá kênh thì lấy theo giá gốc.{owner ? '' : ' Giá vốn do owner điền sau.'}
               </span>
