@@ -150,7 +150,7 @@ export function StackedArea({ dates }) {
 
       <div
         className="area-tip"
-        style={{ left: `${(ax / W) * 100}%`, top: `${(ay / H) * 100}%`, transform: `translate(${flip ? 'calc(-100% - 16px)' : '16px'}, -30%)` }}
+        style={{ left: `${(ax / W) * 100}%`, transform: `translateX(${flip ? 'calc(-100% - 16px)' : '16px'})` }}
         aria-hidden="true"
       >
         <b>{dow}, {dm(perDay[act].dk)}</b>

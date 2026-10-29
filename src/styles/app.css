@@ -2595,6 +2595,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .area-wrap svg.area { min-width: 0; touch-action: pan-y; cursor: crosshair; }
 .area-tip {
   position: absolute;
+  top: 6px;
   min-width: 190px;
   padding: 12px 14px;
   border: 1px solid var(--line);
@@ -2606,7 +2607,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
   display: grid;
   gap: 6px;
   font-size: var(--text-xs);
-  transition: left 90ms linear, top 90ms linear;
+  transition: left 90ms linear;
 }
 .area-tip b { font-size: var(--text-xs); font-weight: 600; margin-bottom: 2px; }
 .tip-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 8px; color: var(--ink-2); }
