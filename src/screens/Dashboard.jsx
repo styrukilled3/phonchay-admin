@@ -99,10 +99,7 @@ export default function Dashboard({ range, setRange }) {
                     <span className="v">{compact(r.a.net)}</span>
                     <span className="l">Doanh thu net · {money(r.a.net)}</span>
                   </div>
-                  <Sparkline
-                    series={series}
-                    color={top ? 'var(--accent-ink)' : `var(${r.c.v})`}
-                  />
+                  <Sparkline series={series} />
                 </div>
 
                 <dl className="ch-stats">

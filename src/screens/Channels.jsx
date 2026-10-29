@@ -128,7 +128,7 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
                   </>
                 )}
               </span>
-              <Sparkline series={owner ? r.series : r.qtySeries} color={i === 0 ? 'var(--accent-ink)' : `var(${r.c.v})`} />
+              <Sparkline series={owner ? r.series : r.qtySeries} />
             </span>
 
             <span className="box-foot">

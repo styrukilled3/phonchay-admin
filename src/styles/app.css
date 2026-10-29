@@ -2416,3 +2416,10 @@ svg.area {
 /* Mono: heading siết tracking, nút chính dạng pill */
 h1, h2, h3 { letter-spacing: -0.02em; }
 .btn { border-radius: var(--radius-pill); }
+
+.spark.is-up { --spark: var(--spark-up); }
+.spark.is-down { --spark: var(--spark-down); }
+.spark.is-flat { --spark: var(--spark-flat); }
+.is-top .spark.is-up { --spark: var(--spark-up-light); }
+.is-top .spark.is-down { --spark: var(--spark-down-light); }
+.is-top .spark.is-flat { --spark: var(--spark-flat-light); }

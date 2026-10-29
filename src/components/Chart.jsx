@@ -219,7 +219,20 @@ export function AreaOne({ dates, series, color }) {
   )
 }
 
-export function Sparkline({ series, color }) {
+// Xu hướng: trung bình nửa sau so với nửa đầu. Lệch dưới 3% coi là đi ngang.
+function trendOf(series) {
+  const h = Math.floor(series.length / 2)
+  if (h < 1) return 'flat'
+  const avg = (a) => a.reduce((s, v) => s + v, 0) / a.length
+  const a = avg(series.slice(0, h))
+  const b = avg(series.slice(series.length - h))
+  if (a === 0) return b > 0 ? 'up' : 'flat'
+  const r = (b - a) / a
+  return r > 0.03 ? 'up' : r < -0.03 ? 'down' : 'flat'
+}
+
+export function Sparkline({ series }) {
+  const trend = trendOf(series)
   const W = 88
   const H = 26
   const p = 3
@@ -230,9 +243,9 @@ export function Sparkline({ series, color }) {
   const last = pts[pts.length - 1]
 
   return (
-    <svg className="spark" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Xu hướng ${series.length} ngày`}>
-      <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx={last[0].toFixed(1)} cy={last[1].toFixed(1)} r="2" fill={color} />
+    <svg className={`spark is-${trend}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Xu hướng ${series.length} ngày: ${trend === 'up' ? 'tăng' : trend === 'down' ? 'giảm' : 'đi ngang'}`}>
+      <path d={d} fill="none" stroke="var(--spark)" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx={last[0].toFixed(1)} cy={last[1].toFixed(1)} r="2" fill="var(--spark)" />
     </svg>
   )
 }

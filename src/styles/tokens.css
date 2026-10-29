@@ -29,6 +29,13 @@
   /* Màu dữ liệu giữ lại nhưng dịu (chroma ~0.09), để UI mono còn dữ liệu tách được */
   --up: oklch(0.8 0.1 165);
   --down: oklch(0.72 0.12 22);
+  /* Sparkline: tăng xanh, giảm đỏ, đi ngang xám. Bản -light dùng trên khối trắng */
+  --spark-up: oklch(0.8 0.17 150);
+  --spark-down: oklch(0.7 0.2 25);
+  --spark-flat: oklch(0.7 0 0);
+  --spark-up-light: oklch(0.48 0.14 150);
+  --spark-down-light: oklch(0.52 0.2 25);
+  --spark-flat-light: oklch(0.45 0 0);
   --danger: oklch(0.72 0.12 22);
 
   /* 5 kênh: năm bậc xám, phân biệt bằng độ sáng + nhãn. Thấp nhất vẫn >3:1 trên surface */
