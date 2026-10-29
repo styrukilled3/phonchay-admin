@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CHANNELS, PRODUCTS, channel, product } from '../data/seed.js'
+import { CHANNELS, PRODUCTS, channel, needsPrice, product } from '../data/seed.js'
 import { skuUnits, stockStats, stockStatus } from '../lib/stock.js'
 import { dmy } from '../lib/format.js'
 import { Tag } from '../components/bits.jsx'
@@ -129,6 +129,7 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
         <div className="rs-rows">
           {pending.map((r) => {
             const enough = r.lines.every((l) => (wh[l.sku] ?? 0) >= l.qty)
+            const unpriced = r.lines.filter((l) => needsPrice(product(l.sku)))
             return (
               <div className="rq-card" key={r.id}>
                 <div className="rq-head">
@@ -151,8 +152,11 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
                 </ul>
                 <div className="actions rs-actions">
                   <button type="button" className="btn btn-secondary" onClick={() => onReject(r.id)}>Từ chối</button>
-                  <button type="button" className="btn" disabled={!enough} onClick={() => onApprove(r.id)}>
-                    {enough ? 'Duyệt và chuyển kho' : 'Kho tổng không đủ'}
+                  {unpriced.length > 0 && (
+                    <span className="rq-short rq-total">Chưa có giá: {unpriced.map((l) => l.sku).join(', ')}. Điền ở màn Sản phẩm.</span>
+                  )}
+                  <button type="button" className="btn" disabled={!enough || unpriced.length > 0} onClick={() => onApprove(r.id)}>
+                    {!enough ? 'Kho tổng không đủ' : unpriced.length ? 'Chưa có giá' : 'Duyệt và chuyển kho'}
                   </button>
                 </div>
               </div>

@@ -2389,3 +2389,27 @@ svg.area {
   color: var(--ink-2);
   overflow-wrap: anywhere;
 }
+
+/* ---------- Giá theo kênh tự tính, bảng sản phẩm sửa giá ---------- */
+.np-ch-row {
+  grid-template-columns: 110px minmax(0, 1fr) 80px 90px;
+}
+
+.np-ch-price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.np-note {
+  padding: var(--space-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+}
+
+.cell-in {
+  width: 104px;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  text-align: right;
+  font-size: var(--text-sm);
+}

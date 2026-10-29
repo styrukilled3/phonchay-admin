@@ -4,14 +4,14 @@ import { deaccent, dmy, money, pct } from '../lib/format.js'
 import { LockIcon, NumInput, StatusChip, Tag, TrashIcon } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast, avail }) {
+export default function Entry({ role, date, setDate, ch, rows, setRows, status, onSend, onSave, toast, avail, lineTotal }) {
   const [query, setQuery] = useState('')
   const searchRef = useRef(null)
   const chn = channel(ch)
   const owner = role === 'owner'
   const locked = status === 'locked'
 
-  const sub = rows.reduce((a, r) => a + r.price * r.qty, 0)
+  const sub = rows.reduce((a, r) => a + lineTotal(r.sku, r.qty), 0)
   const qty = rows.reduce((a, r) => a + r.qty, 0)
   const fee = Math.round(sub * chn.fee)
   const cogs = rows.reduce((a, r) => a + product(r.sku).cost * r.qty, 0)
@@ -190,7 +190,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                     {owner && (
                     <div className="price-f price-static">
                       <span className="k">Giá kênh</span>
-                      <span className="v">{money(r.price)}</span>
+                      <span className="v">{money(r.qty > 0 ? lineTotal(r.sku, r.qty) / r.qty : lineTotal(r.sku, 1))}</span>
                     </div>
                     )}
 
@@ -221,7 +221,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
 
                     {owner && (
                     <div className="line">
-                      {money(r.price * r.qty)}
+                      {money(lineTotal(r.sku, r.qty))}
                     </div>
                     )}
 

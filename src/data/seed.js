@@ -22,7 +22,7 @@ export const PRODUCTS = [
 ]
 
 // Sàn gánh phí nên giá niêm yết cộng thêm, kênh trực tiếp bớt lại
-const CH_ADJ = { '808': 0, TLD: 0, HP: -10000, SHP: 10000, SPF: -10000 }
+export const CH_ADJ = { '808': 0, TLD: 0, HP: -10000, SHP: 10000, SPF: -10000 }
 
 export function product(sku) {
   return PRODUCTS.find((p) => p.sku === sku)
@@ -31,8 +31,13 @@ export function product(sku) {
 // Sản phẩm tạo mới có thể đặt giá riêng từng kênh (p.prices), không thì theo giá gốc cộng điều chỉnh kênh
 export function priceOf(sku, chId) {
   const p = product(sku)
-  if (!p) return 0
+  if (!p || !(p.base > 0)) return 0
   return p.prices?.[chId] ?? p.base + (CH_ADJ[chId] ?? 0)
+}
+
+// SP nhân viên tạo chưa có giá gốc hoặc giá vốn thì owner phải điền mới duyệt chuyển kho được
+export function needsPrice(p) {
+  return !(p.base > 0 && p.cost > 0)
 }
 
 // ---------- Kho ----------
@@ -208,7 +213,7 @@ export function setDayLines(date, chId, rows) {
       ch: chId,
       sku: r.sku,
       qty: r.qty,
-      price: priceOf(r.sku, chId),
+      price: r.price ?? priceOf(r.sku, chId),
       discount: 0,
       fee: c.fee,
       cost: product(r.sku).cost,

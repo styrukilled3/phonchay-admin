@@ -9,7 +9,9 @@ import {
   initialStock,
   initialWarehouse,
   isLocked,
+  needsPrice,
   priceOf,
+  product,
   setDayLines,
 } from './data/seed.js'
 import { dmy } from './lib/format.js'
@@ -24,6 +26,7 @@ import Warehouse from './screens/Warehouse.jsx'
 import RequestStock from './screens/RequestStock.jsx'
 import NewProduct from './screens/NewProduct.jsx'
 import StockBar from './components/StockBar.jsx'
+import { initialLots, putBack, takeFifo, totalFor } from './lib/lots.js'
 
 const SCREENS = [
   { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'ZONE SELL', roles: ['staff', 'owner'] },
@@ -70,6 +73,8 @@ export default function App() {
   const [sent, setSent] = useState({})
   const [stock, setStock] = useState(initialStock)
   const [wh, setWh] = useState(initialWarehouse)
+  const [lots, setLots] = useState(() => initialLots(initialStock()))
+  const [, setPriceVer] = useState(0) // bump khi owner sửa giá để vẽ lại
   const [requests, setRequests] = useState(initialRequests)
   const [sentRows, setSentRows] = useState({}) // key ngày|kênh -> dòng đã gửi, để tính lại tồn khi gửi lại
   const [receipts, setReceipts] = useState(RECEIPTS_SEED)
@@ -180,6 +185,18 @@ export default function App() {
       toast('Kho tổng không đủ hàng để duyệt yêu cầu này.')
       return
     }
+    if (r.lines.some((l) => needsPrice(product(l.sku)))) {
+      toast('Có SKU chưa có giá gốc hoặc giá vốn. Điền ở màn Sản phẩm trước.')
+      return
+    }
+    // Chốt giá lúc chuyển kho: mỗi lần chuyển là một lô với giá kênh tại thời điểm này
+    setLots((L) => {
+      const next = { ...L, [r.ch]: { ...(L[r.ch] ?? {}) } }
+      r.lines.forEach((l) => {
+        next[r.ch][l.sku] = [...(next[r.ch][l.sku] ?? []), { qty: l.qty, price: priceOf(l.sku, r.ch) }]
+      })
+      return next
+    })
     setWh((w) => {
       const next = { ...w }
       r.lines.forEach((l) => {
@@ -209,10 +226,37 @@ export default function App() {
     return (stock[sku]?.[openCh] ?? 0) + prev
   }
 
-  // Gửi ngày: ghi số bán vào dữ liệu doanh thu và trừ tồn kênh
+  // Lô của SKU ở kênh đang mở, đã hoàn phần gửi trước đó (để gửi lại thì tính lại đúng)
+  function viewLots(sku) {
+    const prevParts = (sentRows[key] ?? []).find((r) => r.sku === sku)?.parts ?? []
+    return putBack(lots[openCh]?.[sku] ?? [], prevParts)
+  }
+
+  // Tiền của qty đơn vị theo giá lô (FIFO), chỉ owner thấy
+  function lineTotal(sku, qty) {
+    return totalFor(viewLots(sku), qty, priceOf(sku, openCh))
+  }
+
+  function editProduct(sku, patch) {
+    Object.assign(product(sku), patch)
+    setPriceVer((v) => v + 1)
+  }
+
+  // Gửi ngày: lấy hàng theo lô FIFO, ghi số bán theo giá lô vào doanh thu và trừ tồn kênh
   function sendDay() {
     const prev = sentRows[key] ?? []
-    const next = rows.filter((r) => r.qty > 0).map((r) => ({ sku: r.sku, qty: r.qty }))
+    const L = { ...(lots[openCh] ?? {}) }
+    prev.forEach((r) => {
+      L[r.sku] = putBack(L[r.sku] ?? [], r.parts)
+    })
+    const next = rows
+      .filter((r) => r.qty > 0)
+      .map((r) => {
+        const { rest, parts } = takeFifo(L[r.sku] ?? [], r.qty)
+        L[r.sku] = rest
+        return { sku: r.sku, qty: r.qty, parts }
+      })
+    setLots((all) => ({ ...all, [openCh]: L }))
     setStock((st) => {
       const out = { ...st }
       const touch = (sku, delta) => {
@@ -222,7 +266,11 @@ export default function App() {
       next.forEach((r) => touch(r.sku, -r.qty))
       return out
     })
-    setDayLines(date, openCh, next)
+    setDayLines(
+      date,
+      openCh,
+      next.flatMap((r) => r.parts.map((p) => ({ sku: r.sku, qty: p.qty, price: p.price }))),
+    )
     setSentRows((m) => ({ ...m, [key]: next }))
     setSent((x) => ({ ...x, [key]: true }))
     toast(`Đã gửi ngày ${dmy(date)} · ${channel(openCh).name} cho owner.`)
@@ -327,6 +375,7 @@ export default function App() {
                   onRequest={() => openSub('request')}
                   stock={stock}
                   avail={availOf}
+                  lineTotal={lineTotal}
                   date={date}
                   setDate={setDate}
                   rows={rows}
@@ -375,7 +424,7 @@ export default function App() {
               ))}
             {active.id === 'history' && <History statusOf={statusOf} role={role} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
-            {active.id === 'products' && <Products />}
+            {active.id === 'products' && <Products onEdit={editProduct} />}
             {active.id === 'lock' && <LockBook />}
           </main>
         </div>

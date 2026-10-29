@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CHANNELS, PRODUCTS } from '../data/seed.js'
+import { CHANNELS, CH_ADJ, PRODUCTS } from '../data/seed.js'
 import { deaccent, money, pct } from '../lib/format.js'
 import { NumInput } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
@@ -22,7 +22,6 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
   const [customSize, setCustomSize] = useState('')
   const [cost, setCost] = useState(0)
   const [base, setBase] = useState(0)
-  const [prices, setPrices] = useState({}) // giá riêng từng kênh, trống = theo giá gốc
   const [qty, setQty] = useState({}) // tồn đầu kỳ theo size, vào kho tổng
 
   // Giữ thứ tự S M L XL... rồi tới size tự thêm
@@ -37,7 +36,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
     variant: color.trim() ? `${color.trim()} / ${size}` : size,
   }))
   const dups = items.filter((it) => PRODUCTS.some((p) => p.sku === it.sku)).map((it) => it.sku)
-  const valid = name.trim() && items.length > 0 && dups.length === 0 && base > 0 && cost >= 0
+  const valid = name.trim() && items.length > 0 && dups.length === 0 && (!owner || base > 0)
 
   function toggleSize(sz) {
     setSizes((l) => (l.includes(sz) ? l.filter((x) => x !== sz) : [...l, sz]))
@@ -50,10 +49,9 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
   }
 
   function save() {
-    const prices_ = Object.fromEntries(CHANNELS.map((c) => [c.id, prices[c.id] || base]))
     onSave(
       items.map((it) => ({
-        product: { sku: it.sku, name: name.trim(), variant: it.variant, base, cost, prices: prices_ },
+        product: { sku: it.sku, name: name.trim(), variant: it.variant, base: owner ? base : 0, cost: owner ? cost : 0 },
         qty: qty[it.size] ?? 0,
       })),
     )
@@ -123,53 +121,42 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
             </div>
           </Reveal>
 
-          <Reveal as="section" className="card">
-            <header>
-              <h2>{owner ? 'Giá vốn và giá bán theo kênh' : 'Giá bán theo kênh'}</h2>
-              <span className="hint">
-                Để trống giá kênh thì lấy theo giá gốc.{owner ? '' : ' Giá vốn do owner điền sau.'}
-              </span>
-            </header>
-            <div className="rs-grid">
-              {owner && (
+          {owner ? (
+            <Reveal as="section" className="card">
+              <header>
+                <h2>Giá vốn và giá bán</h2>
+                <span className="hint">Nhập giá gốc, giá từng kênh tự tính khi chuyển kho xuống kênh.</span>
+              </header>
+              <div className="rs-grid">
                 <div className="field">
                   <label htmlFor="np-cost">Giá vốn</label>
                   <NumInput id="np-cost" className="input" value={cost} onCommit={setCost} />
                 </div>
-              )}
-              <div className="field">
-                <label htmlFor="np-base">Giá bán gốc</label>
-                <NumInput id="np-base" className="input" value={base} onCommit={setBase} />
+                <div className="field">
+                  <label htmlFor="np-base">Giá bán gốc</label>
+                  <NumInput id="np-base" className="input" value={base} onCommit={setBase} />
+                </div>
               </div>
-            </div>
-            <div className="np-ch">
-              {CHANNELS.map((c) => {
-                const price = prices[c.id] || base
-                const net = price * (1 - c.fee) - cost
-                const margin = price > 0 ? net / price : 0
-                return (
-                  <div className={`np-ch-row${owner ? '' : ' is-staff'}`} key={c.id} style={{ '--ch': `var(${c.v})` }}>
-                    <span className="np-ch-name">{c.name}</span>
-                    <NumInput
-                      className="input"
-                      value={prices[c.id] ?? ''}
-                      placeholder={String(base)}
-                      onCommit={(n) => setPrices((p) => ({ ...p, [c.id]: n }))}
-                      aria-label={`Giá bán kênh ${c.name}`}
-                    />
-                    {owner && (
-                      <>
-                        <span className="np-ch-meta">Phí {pct(c.fee)}</span>
-                        <span className={`np-ch-meta ${margin < 0.25 ? 'is-down' : 'is-up'}`}>
-                          Lãi {price > 0 && cost > 0 ? pct(margin) : '—'}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </Reveal>
+              <div className="np-ch">
+                {CHANNELS.map((c) => {
+                  const price = base > 0 ? base + (CH_ADJ[c.id] ?? 0) : 0
+                  const margin = price > 0 ? (price * (1 - c.fee) - cost) / price : 0
+                  return (
+                    <div className="np-ch-row" key={c.id} style={{ '--ch': `var(${c.v})` }}>
+                      <span className="np-ch-name">{c.name}</span>
+                      <span className="np-ch-price">{price > 0 ? money(price) : '—'}</span>
+                      <span className="np-ch-meta">Phí {pct(c.fee)}</span>
+                      <span className={`np-ch-meta ${margin < 0.25 ? 'is-down' : 'is-up'}`}>
+                        Lãi {price > 0 && cost > 0 ? pct(margin) : '—'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </Reveal>
+          ) : (
+            <p className="hint np-note">Giá vốn và giá bán do owner điền sau. Sản phẩm chưa có giá thì chưa chuyển kho xuống kênh được.</p>
+          )}
 
           <Reveal as="section" className="card">
             <header>
@@ -207,7 +194,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
                 <li key={it.sku}>{it.sku}</li>
               ))}
             </ul>
-            <span className="np-p-price">{base ? money(base) : '—'}</span>
+            {owner && <span className="np-p-price">{base ? money(base) : '—'}</span>}
             <div className="actions">
               <button type="button" className="btn" disabled={!valid} onClick={save}>{items.length > 1 ? `Lưu ${items.length} SKU` : 'Lưu sản phẩm'}</button>
               <button type="button" className="btn btn-secondary" onClick={() => toast('Đã lưu nháp sản phẩm.')}>Lưu nháp</button>
