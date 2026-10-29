@@ -140,21 +140,31 @@ export default function App() {
     toast(`Đã nhập ${totalQty} sp vào kho tổng${supplier ? ` · ${supplier}` : ''}.`)
   }
 
-  function saveProduct(p, qty) {
-    addProduct(p)
-    setWh((w) => ({ ...w, [p.sku]: qty }))
+  // list: [{ product, qty }], mỗi size một SKU
+  function addProducts(list) {
+    list.forEach(({ product: p }) => addProduct(p))
+    setWh((w) => {
+      const next = { ...w }
+      list.forEach(({ product: p, qty }) => {
+        next[p.sku] = qty
+      })
+      return next
+    })
+    const n = list.length
+    toast(n > 1 ? `Đã tạo ${list[0].product.name} với ${n} size.` : `Đã tạo sản phẩm ${list[0].product.name} · ${list[0].product.variant}.`)
+  }
+
+  function saveProduct(list) {
+    addProducts(list)
     // Tạo từ phiếu nhập thì quay lại phiếu để thêm dòng luôn
     setSub(newFrom === 'restock' ? 'restock' : null)
     setNewFrom(null)
     window.scrollTo({ top: 0 })
-    toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
   }
 
   // Tạo sản phẩm ngay trong Kho tổng: không rời màn, SP hiện luôn trong bảng tồn
-  function createInline(p, qty) {
-    addProduct(p)
-    setWh((w) => ({ ...w, [p.sku]: qty }))
-    toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
+  function createInline(list) {
+    addProducts(list)
   }
 
   function submitRequest(ch, lines) {

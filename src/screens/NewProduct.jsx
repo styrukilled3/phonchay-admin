@@ -4,39 +4,58 @@ import { deaccent, money, pct } from '../lib/format.js'
 import { NumInput } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-// "Áo thun Phở" + "Đen / M" -> "PC-ATP-DEN-M"
-function suggestSku(name, variant) {
+const PRESET_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'Freesize']
+
+// "Áo thun Phở" + "Đen" + "M" -> "PC-ATP-DEN-M"; Freesize rút thành OS như các SKU cũ
+function buildSku(name, color, size) {
   const initials = deaccent(name).split(/\s+/).filter(Boolean).map((w) => w[0]).join('').toUpperCase()
-  const v = deaccent(variant).split(/[\s/]+/).filter(Boolean).map((w) => w.slice(0, 3).toUpperCase()).join('-')
-  return ['PC', initials, v].filter(Boolean).join('-')
+  const c = deaccent(color).split(/\s+/).filter(Boolean).map((w) => w.slice(0, 3).toUpperCase()).join('')
+  const sz = size === 'Freesize' ? 'OS' : deaccent(size).toUpperCase().replace(/\s+/g, '')
+  return ['PC', initials, c, sz].filter(Boolean).join('-')
 }
 
 export default function NewProduct({ role, inline = false, onBack, onSave, toast }) {
   const owner = role === 'owner'
   const [name, setName] = useState('')
-  const [variant, setVariant] = useState('')
-  const [sku, setSku] = useState('')
-  const [skuTouched, setSkuTouched] = useState(false)
+  const [color, setColor] = useState('')
+  const [sizes, setSizes] = useState([]) // mỗi size là một SKU riêng
+  const [customSize, setCustomSize] = useState('')
   const [cost, setCost] = useState(0)
   const [base, setBase] = useState(0)
   const [prices, setPrices] = useState({}) // giá riêng từng kênh, trống = theo giá gốc
-  const [qty, setQty] = useState(0) // tồn đầu kỳ, vào kho tổng
+  const [qty, setQty] = useState({}) // tồn đầu kỳ theo size, vào kho tổng
 
-  const shownSku = skuTouched ? sku : suggestSku(name, variant)
-  const dup = PRODUCTS.some((p) => p.sku === shownSku)
-  const valid = name.trim() && shownSku && !dup && base > 0 && cost >= 0
+  // Giữ thứ tự S M L XL... rồi tới size tự thêm
+  const ordered = [...sizes].sort((a, b) => {
+    const ia = PRESET_SIZES.indexOf(a)
+    const ib = PRESET_SIZES.indexOf(b)
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+  })
+  const items = ordered.map((size) => ({
+    size,
+    sku: buildSku(name, color, size),
+    variant: color.trim() ? `${color.trim()} / ${size}` : size,
+  }))
+  const dups = items.filter((it) => PRODUCTS.some((p) => p.sku === it.sku)).map((it) => it.sku)
+  const valid = name.trim() && items.length > 0 && dups.length === 0 && base > 0 && cost >= 0
+
+  function toggleSize(sz) {
+    setSizes((l) => (l.includes(sz) ? l.filter((x) => x !== sz) : [...l, sz]))
+  }
+
+  function addCustom() {
+    const sz = customSize.trim()
+    if (sz && !sizes.includes(sz)) setSizes((l) => [...l, sz])
+    setCustomSize('')
+  }
 
   function save() {
+    const prices_ = Object.fromEntries(CHANNELS.map((c) => [c.id, prices[c.id] || base]))
     onSave(
-      {
-        sku: shownSku,
-        name: name.trim(),
-        variant: variant.trim() || 'Mặc định',
-        base,
-        cost,
-        prices: Object.fromEntries(CHANNELS.map((c) => [c.id, prices[c.id] || base])),
-      },
-      qty,
+      items.map((it) => ({
+        product: { sku: it.sku, name: name.trim(), variant: it.variant, base, cost, prices: prices_ },
+        qty: qty[it.size] ?? 0,
+      })),
     )
   }
 
@@ -70,23 +89,37 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
                 <input id="np-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Áo thun Phở" />
               </div>
               <div className="field">
-                <label htmlFor="np-var">Biến thể (màu / size)</label>
-                <input id="np-var" className="input" value={variant} onChange={(e) => setVariant(e.target.value)} placeholder="Đen / M" />
+                <label htmlFor="np-color">Màu</label>
+                <input id="np-color" className="input" value={color} onChange={(e) => setColor(e.target.value)} placeholder="Đen" />
               </div>
-              <div className="field">
-                <label htmlFor="np-sku">SKU</label>
-                <input
-                  id="np-sku"
-                  className="input"
-                  value={shownSku}
-                  aria-invalid={dup || undefined}
-                  onChange={(e) => {
-                    setSkuTouched(true)
-                    setSku(e.target.value.toUpperCase())
-                  }}
-                />
-                {dup && <span className="hint np-err">SKU này đã có.</span>}
+            </div>
+
+            <div className="field">
+              <label id="np-size-l">Size (chọn nhiều, mỗi size là một SKU riêng)</label>
+              <div className="np-sizes" role="group" aria-labelledby="np-size-l">
+                {[...PRESET_SIZES, ...sizes.filter((x) => !PRESET_SIZES.includes(x))].map((sz) => (
+                  <button key={sz} type="button" className="np-chip" aria-pressed={sizes.includes(sz)} onClick={() => toggleSize(sz)}>
+                    {sz}
+                  </button>
+                ))}
+                <span className="np-custom">
+                  <input
+                    className="input"
+                    value={customSize}
+                    placeholder="Size khác"
+                    aria-label="Thêm size khác"
+                    onChange={(e) => setCustomSize(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addCustom()
+                      }
+                    }}
+                  />
+                  <button type="button" className="btn btn-secondary" onClick={addCustom}>Thêm</button>
+                </span>
               </div>
+              {dups.length > 0 && <span className="hint np-err">SKU đã có: {dups.join(', ')}.</span>}
             </div>
           </Reveal>
 
@@ -141,14 +174,25 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
           <Reveal as="section" className="card">
             <header>
               <h2>Tồn kho tổng đầu kỳ</h2>
-              <span className="hint">Số lượng đưa vào kho tổng. Để 0 nếu chưa nhập hàng.</span>
+              <span className="hint">Số lượng từng size đưa vào kho tổng. Để 0 nếu chưa nhập hàng.</span>
             </header>
-            <div className="rs-grid">
-              <div className="field">
-                <label htmlFor="np-q">Số lượng</label>
-                <NumInput id="np-q" className="input" value={qty} onCommit={setQty} />
+            {items.length === 0 ? (
+              <p className="hint">Chọn size ở trên để nhập số lượng từng size.</p>
+            ) : (
+              <div className="np-stock">
+                {items.map((it) => (
+                  <div className="field" key={it.size}>
+                    <label htmlFor={`np-q-${it.size}`}>Size {it.size}</label>
+                    <NumInput
+                      id={`np-q-${it.size}`}
+                      className="input"
+                      value={qty[it.size] ?? 0}
+                      onCommit={(n) => setQty((q) => ({ ...q, [it.size]: n }))}
+                    />
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </Reveal>
         </div>
 
@@ -156,11 +200,16 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
           <Reveal className="card np-preview">
             <p className="lbl">Xem trước</p>
             <b className="np-p-name">{name || 'Tên sản phẩm'}</b>
-            <span className="np-p-var">{variant || 'Biến thể'}</span>
-            <span className="np-p-sku">{shownSku || 'SKU'}</span>
+            <span className="np-p-var">{color || 'Màu'}</span>
+            <ul className="np-p-skus">
+              {items.length === 0 && <li>Chưa chọn size</li>}
+              {items.map((it) => (
+                <li key={it.sku}>{it.sku}</li>
+              ))}
+            </ul>
             <span className="np-p-price">{base ? money(base) : '—'}</span>
             <div className="actions">
-              <button type="button" className="btn" disabled={!valid} onClick={save}>Lưu sản phẩm</button>
+              <button type="button" className="btn" disabled={!valid} onClick={save}>{items.length > 1 ? `Lưu ${items.length} SKU` : 'Lưu sản phẩm'}</button>
               <button type="button" className="btn btn-secondary" onClick={() => toast('Đã lưu nháp sản phẩm.')}>Lưu nháp</button>
             </div>
           </Reveal>

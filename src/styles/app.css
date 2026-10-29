@@ -2341,3 +2341,51 @@ svg.area {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Chọn size khi tạo sản phẩm ---------- */
+.np-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.np-chip {
+  min-width: 52px;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.np-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 18%, var(--surface-2));
+  color: var(--ink);
+}
+
+.np-custom {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.np-custom .input {
+  width: 110px;
+}
+
+.np-p-skus {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}

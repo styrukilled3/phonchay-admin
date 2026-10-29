@@ -50,8 +50,8 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
             inline
             toast={toast}
             onBack={() => setCreating(false)}
-            onSave={(p, qty) => {
-              onCreate(p, qty)
+            onSave={(list) => {
+              onCreate(list)
               setCreating(false)
             }}
           />
