@@ -6,12 +6,12 @@
   color-scheme: dark;
 
   /* Mono: near-black thuần chroma 0, ba bậc để tách lớp */
-  --bg: oklch(0.14 0 0);
-  --surface: oklch(0.19 0 0);
-  --surface-2: oklch(0.24 0 0);
-  --surface-3: oklch(0.29 0 0);
+  --bg: oklch(0.11 0 0);
+  --surface: oklch(0.15 0 0);
+  --surface-2: oklch(0.2 0 0);
+  --surface-3: oklch(0.26 0 0);
   /* line: viền trang trí. line-strong: viền control, phải đạt 3:1 trên surface-2 */
-  --line: oklch(0.30 0 0);
+  --line: oklch(1 0 0 / 0.14);
   --line-strong: oklch(0.60 0 0);
 
   --ink: oklch(0.98 0 0);
@@ -22,7 +22,7 @@
   --accent: oklch(0.98 0 0);
   --accent-2: oklch(0.98 0 0);
   --accent-grad: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
-  --accent-ink: oklch(0.14 0 0);
+  --accent-ink: oklch(0.11 0 0);
   --accent-glow: transparent;
   --focus: oklch(0.98 0 0);
 
@@ -36,6 +36,8 @@
   --spark-up-light: oklch(0.48 0.14 150);
   --spark-down-light: oklch(0.52 0.2 25);
   --spark-flat-light: oklch(0.45 0 0);
+  /* Màu duy nhất của chart tổng doanh thu, theo tham chiếu */
+  --chart-hot: oklch(0.72 0.17 48);
   --danger: oklch(0.72 0.12 22);
 
   /* 5 kênh: năm bậc xám, phân biệt bằng độ sáng + nhãn. Thấp nhất vẫn >3:1 trên surface */
@@ -69,8 +71,8 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  --radius-card: 20px;
-  --radius-control: 12px;
+  --radius-card: 8px;
+  --radius-control: 8px;
   --radius-sm: 8px;
   --radius-pill: 999px;
 

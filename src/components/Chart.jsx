@@ -30,9 +30,16 @@ function smooth(points, lo, hi) {
   return d
 }
 
+// Đường gấp khúc (không làm mượt): nét góc cạnh như chart tham chiếu
+function poly(points) {
+  return points.map((p, i) => `${i ? 'L' : 'M'} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
+}
+
+/* Vùng cam = tổng doanh thu gộp mọi kênh, đường xám mảnh = từng kênh chồng lên.
+   Cam là màu duy nhất của chart, đúng như tham chiếu. */
 export function StackedArea({ dates }) {
   const W = 680
-  const H = 280
+  const H = 300
   const ml = 56
   const mr = 14
   const mt = 18
@@ -50,97 +57,79 @@ export function StackedArea({ dates }) {
   const x = (i) => ml + (dates.length > 1 ? (i * pw) / (dates.length - 1) : pw / 2)
   const y = (v) => mt + ph - (v / max) * ph
 
-  // Ranh giới tích lũy: ch-1 ở đáy, cộng dồn lên
-  const boundaries = [dates.map((_, i) => [x(i), y(0)])]
-  const running = dates.map(() => 0)
-  CHANNELS.forEach((c, ci) => {
-    perDay.forEach((d, i) => {
-      running[i] += d.vals[ci]
-    })
-    boundaries.push(dates.map((_, i) => [x(i), y(running[i])]))
-  })
-
+  const totalPts = totals.map((v, i) => [x(i), y(v)])
+  const line = poly(totalPts)
+  const area = `${line} L ${x(dates.length - 1).toFixed(1)} ${y(0).toFixed(1)} L ${x(0).toFixed(1)} ${y(0).toFixed(1)} Z`
   const ticks = [0, 1, 2, 3, 4].map((t) => (max * t) / 4)
-  const lastTop = boundaries[boundaries.length - 1][dates.length - 1]
+  const last = totalPts[totalPts.length - 1]
+  const labelAt = (i) => i % 5 === 0 || i === dates.length - 1
 
   return (
     <svg
       className="area"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label="Biểu đồ vùng chồng doanh thu gộp theo ngày, tách theo 5 kênh bán"
+      aria-label="Biểu đồ doanh thu gộp theo ngày: vùng cam là tổng mọi kênh, đường xám là từng kênh"
     >
       <defs>
-        {CHANNELS.map((c, i) => (
-          <linearGradient key={c.id} id={`g-${c.id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`var(${c.v})`} stopOpacity={0.55 - i * 0.05} />
-            <stop offset="100%" stopColor={`var(${c.v})`} stopOpacity={0.08} />
-          </linearGradient>
-        ))}
+        <linearGradient id="g-total" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--chart-hot)" stopOpacity="0.85" />
+          <stop offset="55%" stopColor="var(--chart-hot)" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="var(--chart-hot)" stopOpacity="0" />
+        </linearGradient>
       </defs>
 
       {ticks.map((v) => (
         <g key={v}>
-          <line
-            x1={ml}
-            y1={y(v).toFixed(1)}
-            x2={W - mr}
-            y2={y(v).toFixed(1)}
-            stroke="var(--line)"
-            strokeWidth="1"
-            strokeDasharray={v === 0 ? '0' : '2 6'}
-          />
-          <text
-            x={ml - 10}
-            y={(y(v) + 4).toFixed(1)}
-            textAnchor="end"
-            fontSize="10"
-            fill="var(--ink-3)"
-          >
+          <line x1={ml} y1={y(v).toFixed(1)} x2={W - mr} y2={y(v).toFixed(1)} stroke="var(--line)" strokeWidth="1" />
+          <text x={ml - 10} y={(y(v) + 4).toFixed(1)} textAnchor="end" fontSize="10" fill="var(--ink-3)">
             {compact(v)}
           </text>
         </g>
       ))}
+      {dates.map((dk, i) =>
+        labelAt(i) ? (
+          <line key={dk} x1={x(i).toFixed(1)} y1={mt} x2={x(i).toFixed(1)} y2={y(0).toFixed(1)} stroke="var(--line)" strokeWidth="1" opacity="0.55" />
+        ) : null,
+      )}
 
-      {CHANNELS.map((c, ci) => {
-        const top = boundaries[ci + 1]
-        const bottom = boundaries[ci]
-        const topPath = smooth(top, mt, mt + ph)
-        const bottomPts = [...bottom].reverse()
-        const bottomPath = smooth(bottomPts, mt, mt + ph).replace(/^M/, 'L')
-        return (
-          <g key={c.id}>
-            <path d={`${topPath} ${bottomPath} Z`} fill={`url(#g-${c.id})`} />
-            <path d={topPath} fill="none" stroke={`var(${c.v})`} strokeWidth="1.75" />
-          </g>
-        )
-      })}
+      <path d={area} fill="url(#g-total)" />
+      <path d={line} fill="none" stroke="var(--chart-hot)" strokeWidth="1.5" strokeLinejoin="round" />
 
-      <circle cx={lastTop[0]} cy={lastTop[1]} r="4" fill="var(--accent)" />
-      <circle cx={lastTop[0]} cy={lastTop[1]} r="8" fill="var(--accent)" opacity="0.25" />
+      {CHANNELS.map((c, ci) => (
+        <path
+          key={c.id}
+          d={poly(perDay.map((d, i) => [x(i), y(d.vals[ci])]))}
+          fill="none"
+          stroke={`var(${c.v})`}
+          strokeWidth="1"
+          strokeLinejoin="round"
+          opacity="0.8"
+        />
+      ))}
 
-      {perDay.map((d, i) => {
-        const show = i % 5 === 0 || i === perDay.length - 1
-        return (
-          <g key={d.dk}>
-            <rect x={x(i) - pw / dates.length / 2} y={mt} width={pw / dates.length} height={ph} fill="transparent">
-              <title>{`${dmy(d.dk)} · tổng ${money(totals[i])}`}</title>
-            </rect>
-            {show && (
-              <text
-                x={x(i)}
-                y={H - 12}
-                // Nhãn hai đầu neo vào trong, không thì bị cắt ngoài viewBox
-                textAnchor={i === 0 ? 'start' : i === perDay.length - 1 ? 'end' : 'middle'}
-                fontSize="10"
-                fill="var(--ink-3)"
-              >
-                {dm(d.dk)}
-              </text>
-            )}
-          </g>
-        )
-      })}
+      <circle cx={last[0]} cy={last[1]} r="3.5" fill="var(--ink)" />
+      <circle cx={last[0]} cy={last[1]} r="8" fill="var(--ink)" opacity="0.18" />
+
+      {perDay.map((d, i) => (
+        <g key={d.dk}>
+          <rect x={x(i) - pw / dates.length / 2} y={mt} width={pw / dates.length} height={ph} fill="transparent">
+            <title>{`${dmy(d.dk)} · tổng ${money(totals[i])}`}</title>
+          </rect>
+          {labelAt(i) && (
+            <text
+              x={x(i)}
+              y={H - 12}
+              // Nhãn hai đầu neo vào trong, không thì bị cắt ngoài viewBox
+              textAnchor={i === 0 ? 'start' : i === perDay.length - 1 ? 'end' : 'middle'}
+              fontSize="10"
+              fill="var(--ink-3)"
+            >
+              {dm(d.dk)}
+            </text>
+          )}
+        </g>
+      ))}
     </svg>
   )
 }

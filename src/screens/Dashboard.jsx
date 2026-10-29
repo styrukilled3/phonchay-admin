@@ -69,7 +69,7 @@ export default function Dashboard({ range, setRange }) {
           <StackedArea dates={dates} />
         </div>
         <p className="hint">
-          Các lớp chồng lên nhau, mép trên cùng là doanh thu gộp của ngày. Trỏ vào một ngày để xem tổng.
+          Vùng cam là tổng doanh thu gộp mọi kênh trong ngày, các đường xám là từng kênh. Trỏ vào một ngày để xem tổng.
         </p>
       </Reveal>
 
