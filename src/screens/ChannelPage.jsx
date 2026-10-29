@@ -5,10 +5,12 @@ import { AreaOne } from '../components/Chart.jsx'
 import Entry from './Entry.jsx'
 import Reveal from '../components/Reveal.jsx'
 import CountUp from '../components/CountUp.jsx'
+import { chUnits } from '../lib/stock.js'
 
 const TREND_DAYS = 30
 
 export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...entryProps }) {
+  const owner = role === 'owner'
   const c = channel(ch)
   const trend = DATES.slice(-TREND_DAYS)
   const a = aggOf(trend, ch)
@@ -38,22 +40,31 @@ export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...ent
         <div className="hero-top">
           <h2>{c.name}</h2>
           <span className="hint">
-            {TREND_DAYS} ngày gần nhất · phí kênh {pct(c.fee)}
+            {TREND_DAYS} ngày gần nhất{owner ? ` · phí kênh ${pct(c.fee)}` : ''}
           </span>
         </div>
 
         <dl className="hero-stats">
-          <div>
-            <dt>Doanh thu gộp</dt>
-            <dd className="big"><CountUp value={a.gross} format={compact} /></dd>
-            <dd className="sub">{money(a.gross)}</dd>
-          </div>
+          {owner && (
+            <div>
+              <dt>Doanh thu gộp</dt>
+              <dd className="big"><CountUp value={a.gross} format={compact} /></dd>
+              <dd className="sub">{money(a.gross)}</dd>
+            </div>
+          )}
           <div>
             <dt>Số lượng bán</dt>
             <dd className="big"><CountUp value={a.qty} /></dd>
             <dd className="sub">{a.retQty ? `${a.retQty} hoàn` : 'không có hoàn'}</dd>
           </div>
-          {role === 'owner' && (
+          {!owner && (
+            <div>
+              <dt>Tồn kho kênh</dt>
+              <dd className="big"><CountUp value={chUnits(stock, ch)} /></dd>
+              <dd className="sub">sp còn bán được</dd>
+            </div>
+          )}
+          {owner && (
             <>
               <div>
                 <dt>Doanh thu net</dt>
@@ -69,9 +80,11 @@ export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...ent
           )}
         </dl>
 
-        <div className="chart-wrap">
-          <AreaOne dates={trend} series={series} color={`var(${c.v})`} />
-        </div>
+        {owner && (
+          <div className="chart-wrap">
+            <AreaOne dates={trend} series={series} color={`var(${c.v})`} />
+          </div>
+        )}
       </section>
 
       <Reveal as="section" className="card">

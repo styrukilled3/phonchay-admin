@@ -11,6 +11,7 @@ import { chUnits } from '../lib/stock.js'
 
 
 export default function Channels({ role, date, statusOf, onOpen, stock }) {
+  const owner = role === 'owner'
   const [range, setRange] = useState(14)
   const TREND_DAYS = range
   const trend = DATES.slice(-TREND_DAYS)
@@ -21,6 +22,7 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
     today: aggOf([date], c.id),
     period: aggOf(trend, c.id),
     series: trend.map((dk) => aggOf([dk], c.id).gross),
+    qtySeries: trend.map((dk) => aggOf([dk], c.id).qty),
   })).sort((a, b) => b.period.gross - a.period.gross)
 
   const sum = agg(linesIn(trend))
@@ -40,9 +42,12 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
     <section className="block">
       <div className="block-head">
         <h2>Chọn kênh để xem và nhập</h2>
-        <span className="hint">Doanh thu là {TREND_DAYS} ngày gần nhất, tồn kho là tồn của kênh. Ngày đang mở: {dmy(date)}.</span>
+        <span className="hint">
+          {owner ? 'Doanh thu' : 'Số lượng bán'} là {TREND_DAYS} ngày gần nhất, tồn kho là tồn của kênh. Ngày đang mở: {dmy(date)}.
+        </span>
       </div>
 
+      {owner && (
       <Reveal className="rev-hero">
         <div className="rev-info">
           <span className="rev-k">Tổng doanh thu mọi kênh · {TREND_DAYS} ngày</span>
@@ -93,6 +98,7 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
           )}
         />
       </Reveal>
+      )}
 
       <div className="ch-boxes">
         {rows.map((r, i) => (
@@ -110,17 +116,28 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
 
             <span className="box-main">
               <span className="box-figs">
-                <span className="box-v"><CountUp value={r.period.gross} format={compact} /></span>
-                <span className="box-l">Doanh thu gộp {TREND_DAYS} ngày · {money(r.period.gross)}</span>
+                {owner ? (
+                  <>
+                    <span className="box-v"><CountUp value={r.period.gross} format={compact} /></span>
+                    <span className="box-l">Doanh thu gộp {TREND_DAYS} ngày · {money(r.period.gross)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="box-v"><CountUp value={r.period.qty} /></span>
+                    <span className="box-l">Số lượng bán {TREND_DAYS} ngày</span>
+                  </>
+                )}
               </span>
-              <Sparkline series={r.series} color={i === 0 ? 'var(--accent-ink)' : `var(${r.c.v})`} />
+              <Sparkline series={owner ? r.series : r.qtySeries} color={i === 0 ? 'var(--accent-ink)' : `var(${r.c.v})`} />
             </span>
 
             <span className="box-foot">
+              {owner && (
               <span className="box-stat">
                 <span className="k">Hôm nay</span>
                 <span className="v">{r.today.gross ? <CountUp value={r.today.gross} format={compact} /> : '—'}</span>
               </span>
+              )}
               <span className="box-stat">
                 <span className="k">SL hôm nay</span>
                 <span className="v">{r.today.qty ? <CountUp value={r.today.qty} /> : '—'}</span>

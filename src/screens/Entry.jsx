@@ -8,6 +8,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
   const [query, setQuery] = useState('')
   const searchRef = useRef(null)
   const chn = channel(ch)
+  const owner = role === 'owner'
   const locked = status === 'locked'
 
   const sub = rows.reduce((a, r) => a + r.price * r.qty, 0)
@@ -144,7 +145,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                           </span>
                         </span>
                         <span className="r-price">
-                          {money(priceOf(p.sku, ch))} · tồn {avail(p.sku)}
+                          {owner ? `${money(priceOf(p.sku, ch))} · ` : ''}tồn {avail(p.sku)}
                         </span>
                       </button>
                     </li>
@@ -177,7 +178,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
               {rows.map((r, idx) => {
                 const p = product(r.sku)
                 return (
-                  <div className="erow" key={r.sku}>
+                  <div className={`erow${owner ? '' : ' is-staff'}`} key={r.sku}>
                     <div className="who">
                       <span className="sku">{r.sku}</span>
                       <span className="nm">
@@ -186,10 +187,12 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                       <span className="nm">Tồn kênh {avail(r.sku)}</span>
                     </div>
 
+                    {owner && (
                     <div className="price-f price-static">
                       <span className="k">Giá kênh</span>
                       <span className="v">{money(r.price)}</span>
                     </div>
+                    )}
 
                     <div className="stepper">
                       <button
@@ -216,9 +219,11 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                       </button>
                     </div>
 
+                    {owner && (
                     <div className="line">
                       {money(r.price * r.qty)}
                     </div>
+                    )}
 
                     {locked ? (
                       <span />
@@ -242,12 +247,12 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                 <span className="lbl">Số lượng</span>
                 <span className="v">{qty}</span>
               </div>
-              <div className="t">
-                <span className="lbl">Doanh thu gộp</span>
-                <span className="v">{money(sub)}</span>
-              </div>
-              {role === 'owner' && (
+              {owner && (
                 <>
+                  <div className="t">
+                    <span className="lbl">Doanh thu gộp</span>
+                    <span className="v">{money(sub)}</span>
+                  </div>
                   <div className="t">
                     <span className="lbl">Phí kênh {pct(chn.fee)}</span>
                     <span className="v" style={{ color: 'var(--down)' }}>

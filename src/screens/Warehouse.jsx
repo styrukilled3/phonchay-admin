@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { CHANNELS, PRODUCTS, channel, product } from '../data/seed.js'
 import { skuUnits, stockStats, stockStatus } from '../lib/stock.js'
 import { dmy } from '../lib/format.js'
 import { Tag } from '../components/bits.jsx'
 import CountUp from '../components/CountUp.jsx'
 import Reveal from '../components/Reveal.jsx'
+import NewProduct from './NewProduct.jsx'
 
 const STATUS = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' }
 const nf = (n) => Math.round(n).toLocaleString('vi-VN')
@@ -14,8 +16,9 @@ function Badge({ status }) {
   return null
 }
 
-export default function Warehouse({ role, wh, stock, requests, onRestock, onNewProduct, onApprove, onReject, onRequest }) {
+export default function Warehouse({ role, wh, stock, requests, onRestock, onCreate, onApprove, onReject, onRequest, toast }) {
   const owner = role === 'owner'
+  const [creating, setCreating] = useState(false)
   const st = stockStats(wh)
   const pending = requests.filter((r) => r.status === 'pending')
 
@@ -40,8 +43,33 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onNewP
         </div>
       </Reveal>
 
+      {creating && (
+        <Reveal as="section" className="card np-panel">
+          <NewProduct
+            role={role}
+            inline
+            toast={toast}
+            onBack={() => setCreating(false)}
+            onSave={(p, qty) => {
+              onCreate(p, qty)
+              setCreating(false)
+            }}
+          />
+        </Reveal>
+      )}
+
       {!owner && (
         <>
+          <div className="zone-actions">
+            <Reveal as="button" type="button" className="act-box" onClick={() => setCreating((v) => !v)}>
+              <span className="act-plus" aria-hidden="true">+</span>
+              <span className="act-txt">
+                <b>Tạo sản phẩm mới</b>
+                <span>Thêm SKU và đặt giá bán theo kênh</span>
+              </span>
+            </Reveal>
+          </div>
+
           <div className="zone-actions zone-ch">
             {CHANNELS.map((c) => (
               <Reveal as="button" type="button" className="act-box" key={c.id} onClick={() => onRequest(c.id)}>
@@ -83,7 +111,7 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onNewP
             <span>Nhập từ nhà cung cấp vào kho tổng</span>
           </span>
         </Reveal>
-        <Reveal as="button" type="button" className="act-box" onClick={onNewProduct}>
+        <Reveal as="button" type="button" className="act-box" onClick={() => setCreating((v) => !v)}>
           <span className="act-plus" aria-hidden="true">+</span>
           <span className="act-txt">
             <b>Tạo sản phẩm mới</b>

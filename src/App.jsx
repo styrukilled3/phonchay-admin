@@ -150,6 +150,13 @@ export default function App() {
     toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
   }
 
+  // Tạo sản phẩm ngay trong Kho tổng: không rời màn, SP hiện luôn trong bảng tồn
+  function createInline(p, qty) {
+    addProduct(p)
+    setWh((w) => ({ ...w, [p.sku]: qty }))
+    toast(`Đã tạo sản phẩm ${p.name} · ${p.variant}.`)
+  }
+
   function submitRequest(ch, lines) {
     const n = requests.reduce((m, r) => Math.max(m, Number(r.id.slice(3))), 0) + 1
     const id = `YC-${String(n).padStart(4, '0')}`
@@ -350,12 +357,13 @@ export default function App() {
                   stock={stock}
                   requests={requests}
                   onRestock={() => openSub('restock')}
-                  onNewProduct={() => openSub('newproduct')}
+                  onCreate={createInline}
+                  toast={toast}
                   onApprove={approveRequest}
                   onReject={rejectRequest}
                 />
               ))}
-            {active.id === 'history' && <History statusOf={statusOf} />}
+            {active.id === 'history' && <History statusOf={statusOf} role={role} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
             {active.id === 'products' && <Products />}
             {active.id === 'lock' && <LockBook />}

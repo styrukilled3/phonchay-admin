@@ -11,7 +11,8 @@ function suggestSku(name, variant) {
   return ['PC', initials, v].filter(Boolean).join('-')
 }
 
-export default function NewProduct({ onBack, onSave, toast }) {
+export default function NewProduct({ role, inline = false, onBack, onSave, toast }) {
+  const owner = role === 'owner'
   const [name, setName] = useState('')
   const [variant, setVariant] = useState('')
   const [sku, setSku] = useState('')
@@ -41,14 +42,23 @@ export default function NewProduct({ onBack, onSave, toast }) {
 
   return (
     <>
-      <div className="ch-bar">
-        <button type="button" className="back" onClick={onBack}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M13 8H4M7.5 4.5L4 8l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Quay lại
-        </button>
-      </div>
+      {inline ? (
+        <div className="ch-bar np-inline-head">
+          <h2>Sản phẩm mới</h2>
+          <button type="button" className="btn btn-secondary" onClick={onBack}>
+            Đóng
+          </button>
+        </div>
+      ) : (
+        <div className="ch-bar">
+          <button type="button" className="back" onClick={onBack}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M13 8H4M7.5 4.5L4 8l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Quay lại
+          </button>
+        </div>
+      )}
 
       <div className="np-layout">
         <div className="np-main">
@@ -83,13 +93,17 @@ export default function NewProduct({ onBack, onSave, toast }) {
           <Reveal as="section" className="card">
             <header>
               <h2>Giá vốn và giá bán theo kênh</h2>
-              <span className="hint">Để trống giá kênh thì lấy theo giá gốc.</span>
+              <span className="hint">
+                Để trống giá kênh thì lấy theo giá gốc.{owner ? '' : ' Giá vốn do owner điền sau.'}
+              </span>
             </header>
             <div className="rs-grid">
-              <div className="field">
-                <label htmlFor="np-cost">Giá vốn</label>
-                <NumInput id="np-cost" className="input" value={cost} onCommit={setCost} />
-              </div>
+              {owner && (
+                <div className="field">
+                  <label htmlFor="np-cost">Giá vốn</label>
+                  <NumInput id="np-cost" className="input" value={cost} onCommit={setCost} />
+                </div>
+              )}
               <div className="field">
                 <label htmlFor="np-base">Giá bán gốc</label>
                 <NumInput id="np-base" className="input" value={base} onCommit={setBase} />
@@ -101,7 +115,7 @@ export default function NewProduct({ onBack, onSave, toast }) {
                 const net = price * (1 - c.fee) - cost
                 const margin = price > 0 ? net / price : 0
                 return (
-                  <div className="np-ch-row" key={c.id} style={{ '--ch': `var(${c.v})` }}>
+                  <div className={`np-ch-row${owner ? '' : ' is-staff'}`} key={c.id} style={{ '--ch': `var(${c.v})` }}>
                     <span className="np-ch-name">{c.name}</span>
                     <NumInput
                       className="input"
@@ -110,10 +124,14 @@ export default function NewProduct({ onBack, onSave, toast }) {
                       onCommit={(n) => setPrices((p) => ({ ...p, [c.id]: n }))}
                       aria-label={`Giá bán kênh ${c.name}`}
                     />
-                    <span className="np-ch-meta">Phí {pct(c.fee)}</span>
-                    <span className={`np-ch-meta ${margin < 0.25 ? 'is-down' : 'is-up'}`}>
-                      Lãi {price > 0 ? pct(margin) : '—'}
-                    </span>
+                    {owner && (
+                      <>
+                        <span className="np-ch-meta">Phí {pct(c.fee)}</span>
+                        <span className={`np-ch-meta ${margin < 0.25 ? 'is-down' : 'is-up'}`}>
+                          Lãi {price > 0 && cost > 0 ? pct(margin) : '—'}
+                        </span>
+                      </>
+                    )}
                   </div>
                 )
               })}

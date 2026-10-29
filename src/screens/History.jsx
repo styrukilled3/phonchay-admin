@@ -4,7 +4,8 @@ import { compact, dmy } from '../lib/format.js'
 import { StatusChip } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
-export default function History({ statusOf }) {
+export default function History({ statusOf, role }) {
+  const owner = role === 'owner'
   const days = [...DATES].reverse().slice(0, 12)
 
   return (
@@ -24,12 +25,13 @@ export default function History({ statusOf }) {
                   {c.code}
                 </th>
               ))}
-              <th className="num">Tổng gộp</th>
+              <th className="num">{owner ? 'Tổng gộp' : 'Tổng SL'}</th>
             </tr>
           </thead>
           <tbody>
             {days.map((dk) => {
-              const cells = CHANNELS.map((c) => aggOf([dk], c.id).gross)
+              // Nhân viên chỉ thấy số lượng bán, doanh thu chỉ owner thấy
+              const cells = CHANNELS.map((c) => (owner ? aggOf([dk], c.id).gross : aggOf([dk], c.id).qty))
               const tot = cells.reduce((a, v) => a + v, 0)
               return (
                 <tr key={dk}>
@@ -39,11 +41,11 @@ export default function History({ statusOf }) {
                   </td>
                   {cells.map((v, i) => (
                     <td className="num" key={CHANNELS[i].id}>
-                      {v ? compact(v) : <span className="muted">—</span>}
+                      {v ? (owner ? compact(v) : v) : <span className="muted">—</span>}
                     </td>
                   ))}
                   <td className="num">
-                    <b>{compact(tot)}</b>
+                    <b>{owner ? compact(tot) : tot}</b>
                   </td>
                 </tr>
               )

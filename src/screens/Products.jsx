@@ -39,13 +39,13 @@ export default function Products() {
                   <td>
                     {p.name} <span className="muted">· {p.variant}</span>
                   </td>
-                  <td className="num">{compact(p.cost)}</td>
+                  <td className="num">{p.cost > 0 ? compact(p.cost) : <span className="flag">Chưa có giá vốn</span>}</td>
                   {CHANNELS.map((c) => (
                     <td key={c.id} className="num">
                       {compact(priceOf(p.sku, c.id))}
                     </td>
                   ))}
-                  <td className="num">{pct((spNet - p.cost) / spNet)}</td>
+                  <td className="num">{p.cost > 0 ? pct((spNet - p.cost) / spNet) : <span className="muted">—</span>}</td>
                 </tr>
               )
             })}

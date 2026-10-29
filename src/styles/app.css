@@ -2297,3 +2297,44 @@ svg.area {
     grid-column: 2 / -1;
   }
 }
+
+/* ---------- Nhân viên không thấy tiền ---------- */
+.erow.is-staff {
+  grid-template-columns: 1fr 148px 40px;
+}
+
+.np-ch-row.is-staff {
+  grid-template-columns: 110px minmax(0, 1fr);
+}
+
+.np-panel {
+  padding: var(--space-5);
+}
+
+.np-inline-head {
+  margin-bottom: var(--space-4);
+}
+
+.np-inline-head h2 {
+  font-size: var(--text-lg);
+}
+
+@media (max-width: 860px) {
+  .erow.is-staff {
+    grid-template-columns: 1fr auto;
+  }
+
+  .erow.is-staff .icon-btn {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .erow.is-staff .stepper {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .np-ch-row.is-staff {
+    grid-template-columns: 1fr;
+  }
+}
