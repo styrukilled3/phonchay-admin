@@ -2423,3 +2423,22 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .is-top .spark.is-up { --spark: var(--spark-up-light); }
 .is-top .spark.is-down { --spark: var(--spark-down-light); }
 .is-top .spark.is-flat { --spark: var(--spark-flat-light); }
+
+/* Ô kênh bán: trắng hết. Đổi token ngay trong scope để mọi chữ, viền, pill bên trong tự đảo sang nền sáng */
+.ch-box,
+.ch-card {
+  --ink: oklch(0.14 0 0);
+  --ink-2: oklch(0.38 0 0);
+  --ink-3: oklch(0.45 0 0);
+  --line: oklch(0 0 0 / 0.14);
+  --line-strong: oklch(0.45 0 0);
+  --surface-2: oklch(0.93 0 0);
+  --surface-3: oklch(0.88 0 0);
+  background: oklch(0.98 0 0);
+  border-color: transparent;
+  color: var(--ink);
+}
+.ch-box .spark.is-up, .ch-card .spark.is-up { --spark: var(--spark-up-light); }
+.ch-box .spark.is-down, .ch-card .spark.is-down { --spark: var(--spark-down-light); }
+.ch-box .spark.is-flat, .ch-card .spark.is-flat { --spark: var(--spark-flat-light); }
+.side { background: color-mix(in oklch, var(--surface) 72%, transparent); }
