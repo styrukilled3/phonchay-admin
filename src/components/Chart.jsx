@@ -72,6 +72,9 @@ export function StackedArea({ dates }) {
       aria-label="Biểu đồ doanh thu gộp theo ngày: vùng cam là tổng mọi kênh, đường xám là từng kênh"
     >
       <defs>
+        <clipPath id="clip-total">
+          <rect className="reveal-rect" x="0" y="0" width={W} height={H} />
+        </clipPath>
         <linearGradient id="g-total" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--chart-hot)" stopOpacity="0.85" />
           <stop offset="55%" stopColor="var(--chart-hot)" stopOpacity="0.28" />
@@ -93,6 +96,7 @@ export function StackedArea({ dates }) {
         ) : null,
       )}
 
+      <g clipPath="url(#clip-total)">
       <path d={area} fill="url(#g-total)" />
       <path d={line} fill="none" stroke="var(--chart-hot)" strokeWidth="1.5" strokeLinejoin="round" />
 
@@ -107,9 +111,12 @@ export function StackedArea({ dates }) {
           opacity="0.8"
         />
       ))}
+      </g>
 
-      <circle cx={last[0]} cy={last[1]} r="3.5" fill="var(--ink)" />
-      <circle cx={last[0]} cy={last[1]} r="8" fill="var(--ink)" opacity="0.18" />
+      <g className="area-dot">
+        <circle cx={last[0]} cy={last[1]} r="3.5" fill="var(--ink)" />
+        <circle cx={last[0]} cy={last[1]} r="8" fill="var(--ink)" opacity="0.18" />
+      </g>
 
       {perDay.map((d, i) => (
         <g key={d.dk}>

@@ -1,10 +1,12 @@
 import { CHANNELS, DATES, DAYS, LINES } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
-import { Delta, Kpi, Tag } from '../components/bits.jsx'
+import { Delta, Tag } from '../components/bits.jsx'
 import CountUp from '../components/CountUp.jsx'
 import { Sparkline, StackedArea } from '../components/Chart.jsx'
 import Reveal from '../components/Reveal.jsx'
+import TickBar from '../components/TickBar.jsx'
+import TickRing from '../components/TickRing.jsx'
 
 export default function Dashboard({ range, setRange }) {
   const dates = DATES.slice(-range)
@@ -16,15 +18,17 @@ export default function Dashboard({ range, setRange }) {
   const best = rows[0]
   const worst = [...rows].sort((x, y) => x.a.margin - y.a.margin)[0]
 
+  const keep = cur.gross > 0 ? cur.net / cur.gross : 0
+
   return (
     <>
-      <Reveal as="section" className="card">
-        <header>
-          <h2>Khoảng thời gian</h2>
+      <Reveal className="dash-head">
+        <div>
+          <h2>Doanh thu</h2>
           <span className="hint">
             Dữ liệu mẫu {DAYS} ngày, {LINES.length} dòng bán.
           </span>
-        </header>
+        </div>
         <div className="tabs" role="group" aria-label="Khoảng thời gian">
           {[7, 14, 30].map((n) => (
             <button
@@ -41,37 +45,103 @@ export default function Dashboard({ range, setRange }) {
         </div>
       </Reveal>
 
-      <div className="kpis">
-        <Kpi label="Doanh thu gộp" value={<CountUp value={cur.gross} format={compact} />} exact={money(cur.gross)} hero>
-          <Delta now={cur.gross} before={old?.gross} />
-        </Kpi>
-        <Kpi label="Doanh thu net" value={<CountUp value={cur.net} format={compact} />} exact={money(cur.net)}>
-          <Delta now={cur.net} before={old?.net} />
-        </Kpi>
-        <Kpi label="Margin" value={<CountUp value={cur.margin} format={pct} />}>
-          <Delta now={cur.margin} before={old?.margin} points />
-        </Kpi>
-        <Kpi label="Sản phẩm bán" value={<CountUp value={cur.qty} />}>
-          <Delta now={cur.qty} before={old?.qty} />
-        </Kpi>
-      </div>
+      <div className="dash-grid">
+        <div className="dash-main">
+          <Reveal className="kstrip">
+            <div className="kitem">
+              <span className="lbl">Doanh thu net</span>
+              <span className="val">
+                <CountUp value={cur.net} format={compact} />
+              </span>
+              <Delta now={cur.net} before={old?.net} />
+            </div>
+            <div className="kitem">
+              <span className="lbl">Margin</span>
+              <span className="val">
+                <CountUp value={cur.margin} format={pct} />
+              </span>
+              <Delta now={cur.margin} before={old?.margin} points />
+            </div>
+            <div className="kitem">
+              <span className="lbl">Sản phẩm bán</span>
+              <span className="val">
+                <CountUp value={cur.qty} />
+              </span>
+              <Delta now={cur.qty} before={old?.qty} />
+            </div>
+          </Reveal>
 
-      <Reveal as="section" className="card">
-        <div className="chart-head">
-          <h2>Doanh thu gộp theo ngày và kênh</h2>
-          <div className="legend">
-            {CHANNELS.map((c) => (
-              <Tag key={c.id} ch={c} />
-            ))}
-          </div>
+          <Reveal as="section" className="card dchart">
+            <div className="dchart-top">
+              <div>
+                <span className="val">
+                  <CountUp value={cur.gross} format={compact} />
+                </span>
+                <span className="lbl">Doanh thu gộp · {money(cur.gross)}</span>
+              </div>
+              <Delta now={cur.gross} before={old?.gross} />
+            </div>
+            <div className="chart-wrap">
+              <StackedArea key={range} dates={dates} />
+            </div>
+            <div className="chart-foot">
+              <span className="swatch-hot" />
+              <span>Tổng mọi kênh</span>
+              <div className="legend">
+                {CHANNELS.map((c) => (
+                  <Tag key={c.id} ch={c} />
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
-        <div className="chart-wrap">
-          <StackedArea dates={dates} />
-        </div>
-        <p className="hint">
-          Vùng cam là tổng doanh thu gộp mọi kênh trong ngày, các đường xám là từng kênh. Trỏ vào một ngày để xem tổng.
-        </p>
-      </Reveal>
+
+        <aside className="dash-rail">
+          <Reveal as="section" className="card rail-card">
+            <h3 className="rail-title">Tỷ trọng doanh thu net</h3>
+            <TickRing
+              key={range}
+              items={rows.map((r) => ({ id: r.c.id, name: r.c.name, v: r.c.v, value: Math.max(0, r.a.net) }))}
+              total={cur.net}
+              label="Tổng net"
+              format={compact}
+            />
+            <ul className="tk-legend">
+              {rows.map((r) => (
+                <li key={r.c.id} style={{ '--ch': `var(${r.c.v})` }}>
+                  <span className="sw" />
+                  <span className="nm">{r.c.name}</span>
+                  <span className="pc">{pct(cur.net > 0 ? r.a.net / cur.net : 0)}</span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Reveal as="section" className="card rail-card">
+            <div className="rail-row">
+              <h3 className="rail-title">Giữ lại sau phí và hoàn</h3>
+              <span className="rail-num">{pct(keep)}</span>
+            </div>
+            <TickBar key={range} ratio={keep} label="Net trên gộp" />
+            <dl className="kv">
+              <div>
+                <dt>Kênh dẫn đầu</dt>
+                <dd>{best.c.name}</dd>
+              </div>
+              <div>
+                <dt>Margin thấp nhất</dt>
+                <dd>
+                  {worst.c.name} · {pct(worst.a.margin)}
+                </dd>
+              </div>
+              <div>
+                <dt>Kỳ so sánh</dt>
+                <dd>{old ? `${range} ngày trước` : '—'}</dd>
+              </div>
+            </dl>
+          </Reveal>
+        </aside>
+      </div>
 
       <Reveal as="section" className="block">
         <div className="block-head">
