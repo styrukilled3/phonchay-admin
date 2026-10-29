@@ -1448,11 +1448,11 @@ svg.area {
 }
 
 .sb-bar .ok {
-  background: oklch(0.8 0.15 165);
+  background: var(--up);
 }
 
 .sb-bar .low {
-  background: oklch(0.82 0.15 75);
+  background: oklch(0.82 0.1 80);
 }
 
 .sb-bar .out {
@@ -1467,7 +1467,7 @@ svg.area {
 }
 
 .sb-legend .low {
-  color: oklch(0.82 0.15 75);
+  color: oklch(0.82 0.1 80);
 }
 
 .sb-legend .out {
@@ -1541,7 +1541,7 @@ svg.area {
 }
 
 .rs-kpis .kpi .val.is-low {
-  color: oklch(0.82 0.15 75);
+  color: oklch(0.82 0.1 80);
 }
 
 .rs-kpis .kpi .val.is-out {
@@ -1680,13 +1680,13 @@ svg.area {
 }
 
 .stk-badge.is-low {
-  background: oklch(0.3 0.06 75);
-  color: oklch(0.88 0.12 75);
+  background: oklch(0.3 0.04 80);
+  color: oklch(0.88 0.09 80);
 }
 
 .stk-badge.is-out {
-  background: oklch(0.3 0.08 22);
-  color: oklch(0.86 0.1 22);
+  background: oklch(0.3 0.05 22);
+  color: oklch(0.86 0.08 22);
 }
 
 .rs-total {
@@ -1942,7 +1942,7 @@ svg.area {
 }
 
 .stk-list li.is-low b {
-  color: oklch(0.82 0.15 75);
+  color: oklch(0.82 0.1 80);
 }
 
 .stk-list li.is-zero b {
@@ -2001,7 +2001,7 @@ svg.area {
 }
 
 .rq-st.is-pending {
-  color: oklch(0.82 0.15 75);
+  color: oklch(0.82 0.1 80);
 }
 
 .rq-st.is-approved {
