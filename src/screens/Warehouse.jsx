@@ -60,15 +60,17 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
 
       {!owner && (
         <>
-          <div className="zone-actions">
-            <Reveal as="button" type="button" className="act-box" onClick={() => setCreating((v) => !v)}>
-              <span className="act-plus" aria-hidden="true">+</span>
-              <span className="act-txt">
-                <b>Tạo sản phẩm mới</b>
-                <span>Thêm SKU và đặt giá bán theo kênh</span>
-              </span>
-            </Reveal>
-          </div>
+          {!creating && (
+            <div className="zone-actions">
+              <Reveal as="button" type="button" className="act-box" onClick={() => setCreating(true)}>
+                <span className="act-plus" aria-hidden="true">+</span>
+                <span className="act-txt">
+                  <b>Tạo sản phẩm mới</b>
+                  <span>Thêm tên, màu, size. Giá do owner điền sau</span>
+                </span>
+              </Reveal>
+            </div>
+          )}
 
           <div className="zone-actions zone-ch">
             {CHANNELS.map((c) => (
@@ -111,13 +113,15 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
             <span>Nhập từ nhà cung cấp vào kho tổng</span>
           </span>
         </Reveal>
-        <Reveal as="button" type="button" className="act-box" onClick={() => setCreating((v) => !v)}>
-          <span className="act-plus" aria-hidden="true">+</span>
-          <span className="act-txt">
-            <b>Tạo sản phẩm mới</b>
-            <span>Thêm SKU, giá vốn, giá bán theo kênh</span>
-          </span>
-        </Reveal>
+        {!creating && (
+          <Reveal as="button" type="button" className="act-box" onClick={() => setCreating(true)}>
+            <span className="act-plus" aria-hidden="true">+</span>
+            <span className="act-txt">
+              <b>Tạo sản phẩm mới</b>
+              <span>Thêm sản phẩm, giá vốn, giá gốc</span>
+            </span>
+          </Reveal>
+        )}
       </div>
 
       <Reveal as="section" className="card">

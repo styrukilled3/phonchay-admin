@@ -23,6 +23,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
   const [cost, setCost] = useState(0)
   const [base, setBase] = useState(0)
   const [qty, setQty] = useState({}) // tồn đầu kỳ theo size, vào kho tổng
+  const [skuEdit, setSkuEdit] = useState({}) // SKU sửa tay theo size, không sửa thì dùng mã tự đặt
 
   // Giữ thứ tự S M L XL... rồi tới size tự thêm
   const ordered = [...sizes].sort((a, b) => {
@@ -30,13 +31,21 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
     const ib = PRESET_SIZES.indexOf(b)
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
   })
-  const items = ordered.map((size) => ({
-    size,
-    sku: buildSku(name, color, size),
-    variant: color.trim() ? `${color.trim()} / ${size}` : size,
-  }))
-  const dups = items.filter((it) => PRODUCTS.some((p) => p.sku === it.sku)).map((it) => it.sku)
-  const valid = name.trim() && items.length > 0 && dups.length === 0 && (!owner || base > 0)
+  const items = ordered.map((size) => {
+    const auto = buildSku(name, color, size)
+    const typed = skuEdit[size]
+    return {
+      size,
+      auto,
+      sku: typed !== undefined ? typed.toUpperCase().replace(/\s+/g, '') : auto,
+      variant: color.trim() ? `${color.trim()} / ${size}` : size,
+    }
+  })
+  const dups = items
+    .filter((it, i) => PRODUCTS.some((p) => p.sku === it.sku) || items.findIndex((x) => x.sku === it.sku) !== i)
+    .map((it) => it.sku)
+  const empty = items.some((it) => !it.sku)
+  const valid = name.trim() && items.length > 0 && dups.length === 0 && !empty && (!owner || base > 0)
 
   function toggleSize(sz) {
     setSizes((l) => (l.includes(sz) ? l.filter((x) => x !== sz) : [...l, sz]))
@@ -117,7 +126,34 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
                   <button type="button" className="btn btn-secondary" onClick={addCustom}>Thêm</button>
                 </span>
               </div>
-              {dups.length > 0 && <span className="hint np-err">SKU đã có: {dups.join(', ')}.</span>}
+            </div>
+
+            <div className="field">
+              <label id="np-sku-l">SKU sẽ tạo</label>
+              {items.length === 0 ? (
+                <p className="hint">Chọn size, hệ thống tự đặt một mã SKU riêng cho từng size. Sửa tay được nếu hàng đã có mã.</p>
+              ) : (
+                <div className="np-skus" role="group" aria-labelledby="np-sku-l">
+                  {items.map((it) => (
+                    <div className="np-sku-row" key={it.size}>
+                      <span className="np-sku-size">{it.size}</span>
+                      <input
+                        className="input mono"
+                        value={skuEdit[it.size] ?? it.auto}
+                        aria-label={`SKU size ${it.size}`}
+                        onChange={(e) => setSkuEdit((m) => ({ ...m, [it.size]: e.target.value }))}
+                      />
+                      {skuEdit[it.size] !== undefined && skuEdit[it.size] !== it.auto && (
+                        <button type="button" className="link-btn" onClick={() => setSkuEdit((m) => { const n = { ...m }; delete n[it.size]; return n })}>
+                          Về mã tự đặt
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {dups.length > 0 && <span className="hint np-err">SKU bị trùng hoặc đã có: {[...new Set(dups)].join(', ')}.</span>}
+              {empty && <span className="hint np-err">Có SKU đang để trống.</span>}
             </div>
           </Reveal>
 
