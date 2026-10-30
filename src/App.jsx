@@ -94,6 +94,19 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
+  // Spotlight của ô hành động: ghi vị trí con trỏ vào --mx/--my của ô đang trỏ
+  useEffect(() => {
+    const move = (e) => {
+      const el = e.target.closest?.('.act-box')
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+      el.style.setProperty('--my', `${e.clientY - r.top}px`)
+    }
+    document.addEventListener('pointermove', move, { passive: true })
+    return () => document.removeEventListener('pointermove', move)
+  }, [])
+
   const toast = useCallback((message, undo) => {
     setToastState({ message, undo })
     clearTimeout(timer.current)
