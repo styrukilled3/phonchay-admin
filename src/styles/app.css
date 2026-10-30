@@ -27,16 +27,8 @@
 }
 
 .brand .mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-control);
-  background: var(--accent-grad);
-  box-shadow: var(--shadow-glow);
-  color: var(--accent-ink);
-  font-size: var(--text-sm);
-  font-weight: 700;
+  flex: none;
+  color: var(--ink);
 }
 
 .brand .txt {

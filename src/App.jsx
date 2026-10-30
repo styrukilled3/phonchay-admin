@@ -1,3 +1,4 @@
+import Logo from './components/Logo.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   CHANNELS,
@@ -327,9 +328,7 @@ export default function App() {
       <div className="shell">
         <aside className="side">
           <div className="brand">
-            <span className="mark" aria-hidden="true">
-              PC
-            </span>
+            <Logo className="mark" size={40} />
             <span className="txt">
               <b>PHONCHAY</b>
               <span>Admin nội bộ</span>
