@@ -44,6 +44,7 @@ function roleOf(user) {
 function toSession(data) {
   return {
     email: data.user?.email ?? '',
+    uid: data.user?.id ?? '',
     role: roleOf(data.user),
     access_token: data.access_token,
     refresh_token: data.refresh_token,

@@ -60,12 +60,17 @@ export async function disablePush() {
   return 'off'
 }
 
-// Nhân viên vừa lưu yêu cầu lấy hàng: báo máy chủ gửi thông báo cho owner
+// Nhân viên vừa lưu yêu cầu lấy hàng mới: báo máy chủ gửi thông báo cho owner
 export async function notifyNewRequest(requestId) {
   await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'notify', request_id: requestId }) })
 }
 
-// Owner bấm "Gửi thử": máy chủ gửi một thông báo thử tới mọi thiết bị đã bật. Trả { sent, devices, removed, errors }.
+// Owner vừa duyệt/từ chối yêu cầu: báo máy chủ gửi thông báo ngược lại cho nhân viên đã gửi
+export async function notifyResolved(requestId) {
+  await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'resolved', request_id: requestId }) })
+}
+
+// Bấm "Gửi thử": máy chủ gửi một thông báo thử tới các thiết bị của chính người bấm. Trả { sent, devices, removed, errors }.
 export async function testPush() {
   const r = await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'test' }) })
   if (!r.ok) throw new Error(`test ${r.status}`)

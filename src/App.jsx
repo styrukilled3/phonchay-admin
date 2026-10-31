@@ -35,7 +35,7 @@ import { clearMemory, pack, pullAll, pushDoc, unpack } from './lib/sync.js'
 import { configured, restore, signOut, takeRecoveryToken } from './lib/auth.js'
 import Login from './screens/Login.jsx'
 import PushToggle from './components/PushToggle.jsx'
-import { notifyNewRequest } from './lib/push.js'
+import { notifyNewRequest, notifyResolved } from './lib/push.js'
 
 const SCREENS = [
   { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
@@ -98,7 +98,7 @@ export default function App() {
   const dirty = useRef(false)
   const chain = useRef(Promise.resolve())
   const latest = useRef(null)
-  const knownReq = useRef(new Set()) // id yêu cầu lấy hàng đã biết, để chỉ báo owner khi có yêu cầu mới
+  const reqSeen = useRef(new Map()) // id yêu cầu -> trạng thái đã biết, để biết khi nào có yêu cầu mới / vừa được duyệt
 
   const visible = SCREENS.filter((s) => s.roles.includes(role))
   const active = visible.find((s) => s.id === screen) ?? visible[0]
@@ -183,7 +183,7 @@ export default function App() {
     if (p.lots) setLots(p.lots)
     if (p.requests) {
       setRequests(p.requests)
-      p.requests.forEach((r) => knownReq.current.add(r.id))
+      p.requests.forEach((r) => reqSeen.current.set(r.id, r.status))
     }
     if (p.sent) setSent(p.sent)
     if (p.sentRows) setSentRows(p.sentRows)
@@ -278,14 +278,15 @@ export default function App() {
           const after = pack(latest.current.role, latest.current.state)
           dirty.current = Object.keys(after).some((k) => JSON.stringify(after[k]) !== lastPushed.current[k])
           if (allOk && now.role === 'owner') clearSaved()
-          // Nhân viên vừa lưu yêu cầu lấy hàng mới lên máy chủ: báo thông báo đẩy cho owner
-          if (now.role === 'staff' && lastPushed.current.inventory === JSON.stringify(out.inventory)) {
-            now.state.requests
-              .filter((r) => r.status === 'pending' && !knownReq.current.has(r.id))
-              .forEach((r) => {
-                knownReq.current.add(r.id)
-                notifyNewRequest(r.id).catch(() => {})
-              })
+          // Yêu cầu lấy hàng đã lưu lên máy chủ: nhân viên gửi mới thì báo owner, owner duyệt/từ chối thì báo ngược lại nhân viên
+          if (lastPushed.current.inventory === JSON.stringify(out.inventory)) {
+            for (const r of now.state.requests) {
+              const prev = reqSeen.current.get(r.id)
+              if (prev === r.status) continue
+              reqSeen.current.set(r.id, r.status)
+              if (now.role === 'staff' && r.status === 'pending' && prev === undefined) notifyNewRequest(r.id).catch(() => {})
+              if (now.role === 'owner' && prev === 'pending' && (r.status === 'approved' || r.status === 'rejected')) notifyResolved(r.id).catch(() => {})
+            }
           }
         } catch {
           setSyncErr('Chưa lưu được lên máy chủ, đang thử lại…')
@@ -393,7 +394,7 @@ export default function App() {
   function submitRequest(ch, lines) {
     const n = requests.reduce((m, r) => Math.max(m, Number(r.id.slice(3))), 0) + 1
     const id = `YC-${String(n).padStart(4, '0')}`
-    setRequests((r) => [{ id, ch, date: TODAY, status: 'pending', lines }, ...r])
+    setRequests((r) => [{ id, ch, date: TODAY, status: 'pending', lines, by: session?.uid || undefined }, ...r])
     toast(`Đã gửi yêu cầu ${id} cho owner.`)
   }
 
@@ -614,7 +615,7 @@ export default function App() {
                 </p>
               </>
             )}
-            {configured && role === 'owner' && <PushToggle variant="side" onMessage={toast} />}
+            {configured && <PushToggle variant="side" onMessage={toast} />}
             <button type="button" className="link-btn" onClick={logout}>
               Đăng xuất
             </button>
@@ -634,7 +635,7 @@ export default function App() {
             </div>
             <div className="actions role-mobile">
               {!configured && <RoleSwitch role={role} setRole={setRole} />}
-              {configured && role === 'owner' && <PushToggle variant="mobile" onMessage={toast} />}
+              {configured && <PushToggle variant="mobile" onMessage={toast} />}
               <button type="button" className="btn btn-secondary" onClick={logout}>
                 Đăng xuất
               </button>

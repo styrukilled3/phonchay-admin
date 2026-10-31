@@ -1,5 +1,6 @@
 // Gửi thông báo đẩy tới thiết bị của owner khi có yêu cầu lấy hàng mới.
-// Gọi từ app (nhân viên) sau khi lưu yêu cầu: { action: 'notify', request_id }.
+// Nhân viên gửi yêu cầu mới: { action: 'notify', request_id } -> thông báo cho owner.
+// Owner duyệt/từ chối: { action: 'resolved', request_id } -> thông báo ngược lại cho nhân viên đã gửi (không biết ai thì cho mọi nhân viên).
 // Cũng trả khóa công khai VAPID cho app đăng ký thiết bị: { action: 'public-key' }.
 // Khóa VAPID tự sinh lần đầu và nằm trong bảng push_config (chỉ service role đọc được).
 import webpush from "npm:web-push@3.6.7";
@@ -41,9 +42,9 @@ async function sha(s: string) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
 }
 
-// Gửi một thông báo tới mọi thiết bị của owner, dọn thiết bị đã hết hạn
-async function sendAll(payload: string, vapid: { public_key: string; private_key: string }) {
-  const { data: subs } = await admin.from("push_subs").select("id,endpoint,p256dh,auth").eq("role", "owner");
+// Gửi một thông báo tới các thiết bị khớp (cột = giá trị), dọn thiết bị đã hết hạn
+async function sendAll(payload: string, vapid: { public_key: string; private_key: string }, col: string, val: string) {
+  const { data: subs } = await admin.from("push_subs").select("id,endpoint,p256dh,auth").eq(col, val);
   let sent = 0;
   const dead: string[] = [];
   const errors: string[] = [];
@@ -83,30 +84,45 @@ Deno.serve(async (req) => {
     if (body.action === "public-key") return json({ publicKey: vapid.public_key });
 
     if (body.action === "test") {
-      if (u.user.app_metadata?.role !== "owner") return json({ error: "forbidden" }, 403);
       const payload = JSON.stringify({ title: "PHONCHAY", body: "Thông báo thử: máy này nhận được rồi.", url: "./", tag: "test" });
-      return json(await sendAll(payload, vapid));
+      return json(await sendAll(payload, vapid, "user_id", u.user.id));
     }
 
-    if (body.action === "notify") {
+    if (body.action === "notify" || body.action === "resolved") {
       const { data: doc } = await admin.from("app_docs").select("data").eq("key", "inventory").maybeSingle();
       const r = (doc?.data?.requests ?? []).find((x: any) => x.id === body.request_id);
-      if (!r || r.status !== "pending") return json({ sent: 0, reason: "no-pending-request" });
-
+      if (!r) return json({ sent: 0, reason: "no-request" });
       const lines = r.lines ?? [];
-      const dedupe = `${r.id}:${await sha(JSON.stringify(lines))}`;
-      const dup = await admin.from("push_sent").insert({ request_id: dedupe });
-      if (dup.error) return json({ sent: 0, reason: "already-sent" });
-
       const qty = lines.reduce((a: number, l: any) => a + (Number(l.qty) || 0), 0);
-      const payload = JSON.stringify({
-        title: "Yêu cầu lấy hàng mới",
-        body: `${CHANNEL_NAME[r.ch] ?? r.ch}: ${lines.length} SKU, ${qty} sp. Bấm để duyệt.`,
-        url: "./",
-        tag: r.id,
-      });
+      const ch = CHANNEL_NAME[r.ch] ?? r.ch;
 
-      return json(await sendAll(payload, vapid));
+      if (body.action === "notify") {
+        if (r.status !== "pending") return json({ sent: 0, reason: "not-pending" });
+        const dup = await admin.from("push_sent").insert({ request_id: `${r.id}:new:${await sha(JSON.stringify(lines))}` });
+        if (dup.error) return json({ sent: 0, reason: "already-sent" });
+        const payload = JSON.stringify({
+          title: "Yêu cầu lấy hàng mới",
+          body: `${ch}: ${lines.length} SKU, ${qty} sp. Bấm để duyệt.`,
+          url: "./",
+          tag: r.id,
+        });
+        return json(await sendAll(payload, vapid, "role", "owner"));
+      }
+
+      // resolved: chỉ owner được gọi
+      if (u.user.app_metadata?.role !== "owner") return json({ error: "forbidden" }, 403);
+      if (r.status !== "approved" && r.status !== "rejected") return json({ sent: 0, reason: "not-resolved" });
+      const dup = await admin.from("push_sent").insert({ request_id: `${r.id}:${r.status}:${await sha(JSON.stringify(lines))}` });
+      if (dup.error) return json({ sent: 0, reason: "already-sent" });
+      const ok = r.status === "approved";
+      const payload = JSON.stringify({
+        title: ok ? "Yêu cầu được duyệt" : "Yêu cầu bị từ chối",
+        body: ok ? `${r.id} (${ch}, ${qty} sp): hàng đã chuyển về kênh.` : `${r.id} (${ch}, ${qty} sp): owner từ chối yêu cầu.`,
+        url: "./",
+        tag: `${r.id}-${r.status}`,
+      });
+      // gửi đúng người đã gửi yêu cầu; yêu cầu cũ không ghi người gửi thì gửi mọi nhân viên
+      return json(r.by ? await sendAll(payload, vapid, "user_id", r.by) : await sendAll(payload, vapid, "role", "staff"));
     }
     return json({ error: "unknown-action" }, 400);
   } catch (e) {
