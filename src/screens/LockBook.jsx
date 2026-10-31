@@ -6,23 +6,23 @@ import Reveal from '../components/Reveal.jsx'
 // Chưa có audit log thật (cần database). Bảng để trống thay vì số giả.
 const LOG = []
 
-export default function LockBook() {
+export default function LockBook({ onToggle }) {
   return (
     <>
       <Reveal as="section" className="card">
         <header>
           <h2>Trạng thái 30 ngày</h2>
-          <span className="hint">Chốt rồi là chỉ đọc. Mở khóa được ghi vào audit log.</span>
+          <span className="hint">Bấm một ngày để chốt hoặc mở lại. Ngày đã chốt chỉ đọc, nhân viên không sửa được.</span>
         </header>
         <div className="cal">
           {[...DATES].slice(-30).reverse().map((dk) => {
             const lk = isLocked(dk)
             return (
-              <div className={`day ${lk ? 'is-locked' : 'is-open'}`} key={dk}>
+              <button type="button" className={`day ${lk ? 'is-locked' : 'is-open'}`} key={dk} onClick={() => onToggle(dk)} aria-pressed={lk}>
                 <span className="d">{dm(dk)}</span>
                 <span className="num day-v">{compact(aggOf([dk]).gross)}</span>
                 <span className="muted">{lk ? 'đã chốt' : 'đang mở'}</span>
-              </div>
+              </button>
             )
           })}
         </div>

@@ -107,11 +107,16 @@ export const DATES = Array.from({ length: DAYS }, (_, i) => dayKey(addDays(TODAY
 // Dòng bán thật, thêm khi nhân viên gửi ngày (setDayLines)
 export const LINES = []
 
-// Chốt sổ: mọi ngày trước 6 ngày gần nhất đã khóa
-export const LOCK_FROM = DATES[DATES.length - 6]
+// Chốt sổ: owner tự chốt từng ngày ở màn Chốt sổ. Mặc định chưa ngày nào chốt.
+export const LOCKED = new Set()
 
 export function isLocked(dk) {
-  return dk < LOCK_FROM
+  return LOCKED.has(dk)
+}
+
+export function toggleLock(dk) {
+  if (LOCKED.has(dk)) LOCKED.delete(dk)
+  else LOCKED.add(dk)
 }
 
 // Yêu cầu lấy hàng từ kho tổng xuống kênh: pending | approved | rejected

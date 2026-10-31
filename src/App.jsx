@@ -13,6 +13,7 @@ import {
   needsPrice,
   priceOf,
   setRule,
+  toggleLock,
   product,
   setDayLines,
 } from './data/seed.js'
@@ -264,6 +265,12 @@ export default function App() {
     setPriceVer((v) => v + 1)
   }
 
+  function lockDay(dk) {
+    toggleLock(dk)
+    setPriceVer((v) => v + 1)
+    toast(isLocked(dk) ? `Đã chốt ngày ${dmy(dk)}.` : `Đã mở lại ngày ${dmy(dk)}.`)
+  }
+
   function editRule(chId, patch) {
     setRule(chId, patch)
     setPriceVer((v) => v + 1)
@@ -455,7 +462,7 @@ export default function App() {
             {active.id === 'history' && <History statusOf={statusOf} role={role} />}
             {active.id === 'dashboard' && <Dashboard range={range} setRange={setRange} />}
             {active.id === 'products' && <Products onEdit={editProduct} onRule={editRule} />}
-            {active.id === 'lock' && <LockBook />}
+            {active.id === 'lock' && <LockBook onToggle={lockDay} />}
           </main>
         </div>
       </div>
