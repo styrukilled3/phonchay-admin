@@ -64,3 +64,10 @@ export async function disablePush() {
 export async function notifyNewRequest(requestId) {
   await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'notify', request_id: requestId }) })
 }
+
+// Owner bấm "Gửi thử": máy chủ gửi một thông báo thử tới mọi thiết bị đã bật. Trả { sent, devices, removed, errors }.
+export async function testPush() {
+  const r = await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'test' }) })
+  if (!r.ok) throw new Error(`test ${r.status}`)
+  return r.json()
+}

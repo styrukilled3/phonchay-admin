@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { disablePush, enablePush, pushState } from '../lib/push.js'
+import { disablePush, enablePush, pushState, testPush } from '../lib/push.js'
 
 // Nút bật/tắt thông báo đẩy trên thiết bị này. Chỉ owner thấy.
 export default function PushToggle({ variant, onMessage }) {
@@ -38,10 +38,39 @@ export default function PushToggle({ variant, onMessage }) {
     setBusy(false)
   }
 
+  async function test() {
+    if (busy) return
+    setBusy(true)
+    try {
+      const r = await testPush()
+      if (r.devices === 0) onMessage('Máy chủ chưa có thiết bị nào đăng ký. Tắt rồi bật lại thông báo.')
+      else if (r.sent === 0) onMessage(`Có ${r.devices} thiết bị nhưng gửi chưa được${r.errors?.length ? ` (${r.errors[0]})` : ''}. Tắt rồi bật lại thông báo.`)
+      else onMessage(`Đã gửi thử tới ${r.sent} thiết bị, đợi vài giây.`)
+    } catch {
+      onMessage('Không gọi được máy chủ gửi thông báo.')
+    }
+    setBusy(false)
+  }
+
+  if (variant === 'mobile' && st === 'on') {
+    return (
+      <button type="button" className="btn btn-secondary" onClick={test} disabled={busy}>
+        Gửi thử thông báo
+      </button>
+    )
+  }
+
   const label = busy ? 'Đang xử lý…' : st === 'on' ? 'Thông báo: bật (bấm để tắt)' : 'Bật thông báo'
   return (
+    <>
+      {st === 'on' && (
+        <button type="button" className="link-btn" onClick={test} disabled={busy}>
+          Gửi thử thông báo
+        </button>
+      )}
     <button type="button" className={variant === 'mobile' ? 'btn btn-secondary' : 'link-btn'} onClick={click} disabled={busy}>
       {variant === 'mobile' ? (st === 'on' ? 'Tắt thông báo' : 'Thông báo') : label}
     </button>
+    </>
   )
 }

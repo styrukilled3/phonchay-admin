@@ -41,6 +41,33 @@ async function sha(s: string) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
 }
 
+// Gửi một thông báo tới mọi thiết bị của owner, dọn thiết bị đã hết hạn
+async function sendAll(payload: string, vapid: { public_key: string; private_key: string }) {
+  const { data: subs } = await admin.from("push_subs").select("id,endpoint,p256dh,auth").eq("role", "owner");
+  let sent = 0;
+  const dead: string[] = [];
+  const errors: string[] = [];
+  await Promise.all((subs ?? []).map(async (s) => {
+    try {
+      await webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        payload,
+        {
+          TTL: 3600,
+          urgency: "high",
+          vapidDetails: { subject: URL_BASE, publicKey: vapid.public_key, privateKey: vapid.private_key },
+        },
+      );
+      sent++;
+    } catch (e: any) {
+      if (e?.statusCode === 404 || e?.statusCode === 410) dead.push(s.id);
+      else errors.push(String(e?.statusCode ?? e?.message ?? e).slice(0, 120));
+    }
+  }));
+  if (dead.length) await admin.from("push_subs").delete().in("id", dead);
+  return { sent, devices: (subs ?? []).length, removed: dead.length, errors };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -54,6 +81,12 @@ Deno.serve(async (req) => {
     const vapid = await getVapid();
 
     if (body.action === "public-key") return json({ publicKey: vapid.public_key });
+
+    if (body.action === "test") {
+      if (u.user.app_metadata?.role !== "owner") return json({ error: "forbidden" }, 403);
+      const payload = JSON.stringify({ title: "PHONCHAY", body: "Thông báo thử: máy này nhận được rồi.", url: "./", tag: "test" });
+      return json(await sendAll(payload, vapid));
+    }
 
     if (body.action === "notify") {
       const { data: doc } = await admin.from("app_docs").select("data").eq("key", "inventory").maybeSingle();
@@ -73,27 +106,7 @@ Deno.serve(async (req) => {
         tag: r.id,
       });
 
-      const { data: subs } = await admin.from("push_subs").select("id,endpoint,p256dh,auth").eq("role", "owner");
-      let sent = 0;
-      const dead: string[] = [];
-      await Promise.all((subs ?? []).map(async (s) => {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-            payload,
-            {
-              TTL: 3600,
-              urgency: "high",
-              vapidDetails: { subject: URL_BASE, publicKey: vapid.public_key, privateKey: vapid.private_key },
-            },
-          );
-          sent++;
-        } catch (e: any) {
-          if (e?.statusCode === 404 || e?.statusCode === 410) dead.push(s.id);
-        }
-      }));
-      if (dead.length) await admin.from("push_subs").delete().in("id", dead);
-      return json({ sent, devices: (subs ?? []).length, removed: dead.length });
+      return json(await sendAll(payload, vapid));
     }
     return json({ error: "unknown-action" }, 400);
   } catch (e) {
