@@ -31,6 +31,8 @@ import NewProduct from './screens/NewProduct.jsx'
 import StockBar from './components/StockBar.jsx'
 import { initialLots, putBack, takeFifo, totalFor } from './lib/lots.js'
 import { clearSaved, loadSaved, save } from './lib/persist.js'
+import { configured, restore, signOut, takeRecoveryToken } from './lib/auth.js'
+import Login from './screens/Login.jsx'
 
 const SCREENS = [
   { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
@@ -64,6 +66,8 @@ function RoleSwitch({ role, setRole }) {
 
 export default function App() {
   const [role, setRole] = useState('staff')
+  const [session, setSession] = useState(undefined) // undefined: đang khôi phục phiên, null: chưa đăng nhập
+  const [recovery, setRecovery] = useState(() => takeRecoveryToken())
   const [screen, setScreen] = useState('entry')
   const [openCh, setOpenCh] = useState(null)
   const [date, setDate] = useState(TODAY)
@@ -91,6 +95,37 @@ export default function App() {
   }, [role, screen, visible])
 
   useEffect(() => () => clearTimeout(timer.current), [])
+
+  // Mở app: khôi phục phiên đã lưu (làm mới token nếu hết hạn)
+  useEffect(() => {
+    let alive = true
+    restore().then((s) => {
+      if (!alive) return
+      if (s) {
+        setRole(s.role)
+        setScreen(s.role === 'owner' ? 'dashboard' : 'entry')
+      }
+      setSession(s)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  function signedIn(s) {
+    setRole(s.role)
+    setScreen(s.role === 'owner' ? 'dashboard' : 'entry')
+    setOpenCh(null)
+    setSub(null)
+    setSession(s)
+  }
+
+  async function logout() {
+    await signOut(session)
+    setSession(null)
+    setOpenCh(null)
+    setSub(null)
+  }
 
   // Spotlight của ô hành động: ghi vị trí con trỏ vào --mx/--my của ô đang trỏ
   useEffect(() => {
@@ -366,6 +401,9 @@ export default function App() {
           ? roleLabel.toUpperCase()
           : `${roleLabel} · ${active.label}`
 
+  if (session === undefined) return null
+  if (!session) return <Login onSignedIn={signedIn} recoveryToken={recovery} onRecovered={() => setRecovery(null)} />
+
   return (
     <>
       <div className="shell">
@@ -397,11 +435,22 @@ export default function App() {
           </div>
 
           <div className="side-foot">
-            <p className="lbl">Xem với vai trò</p>
-            <RoleSwitch role={role} setRole={setRole} />
-            <p className="side-note">
-              Công tắc chỉ dùng khi thử. App thật chặn quyền ở database. Số nhập lưu trong trình duyệt này.
+            <p className="side-who" title={session.email}>
+              <b>{session.email}</b>
+              <span>{role === 'owner' ? 'Owner' : 'Nhân viên'}</span>
             </p>
+            {!configured && (
+              <>
+                <p className="lbl">Xem với vai trò</p>
+                <RoleSwitch role={role} setRole={setRole} />
+                <p className="side-note">
+                  Chế độ thử: công tắc chỉ để xem thử hai vai. Số nhập lưu trong trình duyệt này.
+                </p>
+              </>
+            )}
+            <button type="button" className="link-btn" onClick={logout}>
+              Đăng xuất
+            </button>
             {role === 'owner' && (
               <button type="button" className="link-btn" onClick={resetAll}>
                 Xóa toàn bộ dữ liệu
@@ -417,7 +466,10 @@ export default function App() {
               <h1>{title}</h1>
             </div>
             <div className="actions role-mobile">
-              <RoleSwitch role={role} setRole={setRole} />
+              {!configured && <RoleSwitch role={role} setRole={setRole} />}
+              <button type="button" className="btn btn-secondary" onClick={logout}>
+                Đăng xuất
+              </button>
             </div>
           </header>
 
