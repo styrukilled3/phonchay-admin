@@ -41,6 +41,17 @@ export default function TickRing({ items, total, label, format }) {
       <svg viewBox="0 8 300 252" role="img" aria-label={`Tỷ trọng ${items.map((it) => `${it.name} ${Math.round((it.value / sum) * 100)}%`).join(', ')}`}>
         {ticks.map((t) => (
           <line
+            key={`g${t.i}`}
+            className="tk-ghost"
+            x1={t.x1.toFixed(1)}
+            y1={t.y1.toFixed(1)}
+            x2={t.x2.toFixed(1)}
+            y2={t.y2.toFixed(1)}
+            strokeWidth="4"
+          />
+        ))}
+        {ticks.map((t) => (
+          <line
             key={t.i}
             className="tk"
             style={{ '--i': t.i, stroke: `var(${t.v})` }}
@@ -48,7 +59,6 @@ export default function TickRing({ items, total, label, format }) {
             y1={t.y1.toFixed(1)}
             x2={t.x2.toFixed(1)}
             y2={t.y2.toFixed(1)}
-            pathLength="1"
             strokeWidth="4"
           />
         ))}

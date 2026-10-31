@@ -2556,20 +2556,21 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .area-tip { opacity: 0; }
 .rv.is-in .area-tip { animation: dash-fade 0.5s ease-out 1.35s forwards; }
 
-.tickring .tk { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.rv.is-in .tickring .tk { animation: dash-grow 0.2s ease-out forwards; animation-delay: calc(0.25s + var(--i) * 42ms); }
+.tickring .tk-ghost { stroke: oklch(1 0 0 / 0.14); stroke-linecap: butt; }
+.tickring .tk { opacity: 0; }
+.rv.is-in .tickring .tk { animation: tk-on 0.08s linear forwards; animation-delay: calc(0.3s + var(--i) * 55ms); }
 .tickbar i { opacity: 0; transform: scaleY(0.2); }
 .rv.is-in .tickbar i { animation: dash-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: calc(0.1s + var(--i) * 14ms); }
 
 @keyframes dash-draw { to { transform: scaleX(1); } }
 @keyframes dash-fade { to { opacity: 1; } }
-@keyframes dash-grow { to { stroke-dashoffset: 0; } }
+@keyframes tk-on { to { opacity: 1; } }
 @keyframes dash-pop { to { opacity: 1; transform: scaleY(1); } }
 
 @media (prefers-reduced-motion: reduce) {
   .area .reveal-rect { transform: none; }
   .area .area-dot, .area-tip { opacity: 1; }
-  .tickring .tk { stroke-dashoffset: 0; }
+  .tickring .tk { opacity: 1; }
   .tickbar i { opacity: 1; transform: none; }
   .rv.is-in .area .reveal-rect, .rv.is-in .area .area-dot, .rv.is-in .area-tip, .rv.is-in .tickring .tk, .rv.is-in .tickbar i { animation: none; }
 }
