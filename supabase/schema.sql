@@ -22,7 +22,9 @@ alter table public.app_docs enable row level security;
 
 -- Quyền lấy từ app_metadata trong JWT (người dùng không tự sửa được).
 create or replace function public.is_owner() returns boolean
-language sql stable as $$
+language sql stable
+set search_path = ''
+as $$
   select coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'owner'
 $$;
 
@@ -45,6 +47,7 @@ create or replace function public.save_doc(p_key text, p_data jsonb, p_rev bigin
 returns bigint
 language plpgsql
 security invoker
+set search_path = ''
 as $$
 declare new_rev bigint;
 begin
@@ -64,7 +67,10 @@ begin
   return new_rev;
 end $$;
 
+revoke execute on function public.save_doc(text, jsonb, bigint) from public, anon;
 grant execute on function public.save_doc(text, jsonb, bigint) to authenticated;
+revoke execute on function public.is_owner() from public, anon;
+grant execute on function public.is_owner() to authenticated;
 
 -- Gán quyền owner. Sau khi chạy, đăng xuất rồi đăng nhập lại để token mang quyền mới.
 update auth.users
