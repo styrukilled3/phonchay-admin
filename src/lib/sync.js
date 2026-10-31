@@ -101,7 +101,7 @@ export function clearMemory() {
   lineCostCache = {}
 }
 
-async function headers() {
+export async function authHeaders() {
   const s = await restore()
   if (!s?.access_token) throw new Error('no-session')
   return { apikey: supabase.anon, Authorization: `Bearer ${s.access_token}`, 'Content-Type': 'application/json' }
@@ -109,7 +109,7 @@ async function headers() {
 
 // -> { key: { data, rev } }
 export async function pullAll() {
-  const r = await fetch(`${supabase.url}/rest/v1/app_docs?select=key,data,rev`, { headers: await headers() })
+  const r = await fetch(`${supabase.url}/rest/v1/app_docs?select=key,data,rev`, { headers: await authHeaders() })
   if (!r.ok) throw new Error(`pull ${r.status}`)
   const rows = await r.json()
   return Object.fromEntries(rows.map((x) => [x.key, { data: x.data, rev: Number(x.rev) }]))
@@ -119,7 +119,7 @@ export async function pullAll() {
 export async function pushDoc(key, data, rev) {
   const r = await fetch(`${supabase.url}/rest/v1/rpc/save_doc`, {
     method: 'POST',
-    headers: await headers(),
+    headers: await authHeaders(),
     body: JSON.stringify({ p_key: key, p_data: data, p_rev: rev }),
   })
   if (r.ok) return { ok: true, rev: Number(await r.json()) }

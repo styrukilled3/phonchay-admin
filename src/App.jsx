@@ -34,6 +34,8 @@ import { clearSaved, loadDrafts, loadSaved, save, saveDrafts } from './lib/persi
 import { clearMemory, pack, pullAll, pushDoc, unpack } from './lib/sync.js'
 import { configured, restore, signOut, takeRecoveryToken } from './lib/auth.js'
 import Login from './screens/Login.jsx'
+import PushToggle from './components/PushToggle.jsx'
+import { notifyNewRequest } from './lib/push.js'
 
 const SCREENS = [
   { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
@@ -96,6 +98,7 @@ export default function App() {
   const dirty = useRef(false)
   const chain = useRef(Promise.resolve())
   const latest = useRef(null)
+  const knownReq = useRef(new Set()) // id yêu cầu lấy hàng đã biết, để chỉ báo owner khi có yêu cầu mới
 
   const visible = SCREENS.filter((s) => s.roles.includes(role))
   const active = visible.find((s) => s.id === screen) ?? visible[0]
@@ -178,7 +181,10 @@ export default function App() {
     if (p.wh) setWh(p.wh)
     if (p.stock) setStock(p.stock)
     if (p.lots) setLots(p.lots)
-    if (p.requests) setRequests(p.requests)
+    if (p.requests) {
+      setRequests(p.requests)
+      p.requests.forEach((r) => knownReq.current.add(r.id))
+    }
     if (p.sent) setSent(p.sent)
     if (p.sentRows) setSentRows(p.sentRows)
     if (p.receipts) setReceipts(p.receipts)
@@ -272,6 +278,15 @@ export default function App() {
           const after = pack(latest.current.role, latest.current.state)
           dirty.current = Object.keys(after).some((k) => JSON.stringify(after[k]) !== lastPushed.current[k])
           if (allOk && now.role === 'owner') clearSaved()
+          // Nhân viên vừa lưu yêu cầu lấy hàng mới lên máy chủ: báo thông báo đẩy cho owner
+          if (now.role === 'staff' && lastPushed.current.inventory === JSON.stringify(out.inventory)) {
+            now.state.requests
+              .filter((r) => r.status === 'pending' && !knownReq.current.has(r.id))
+              .forEach((r) => {
+                knownReq.current.add(r.id)
+                notifyNewRequest(r.id).catch(() => {})
+              })
+          }
         } catch {
           setSyncErr('Chưa lưu được lên máy chủ, đang thử lại…')
           setTimeout(() => setSyncTick((x) => x + 1), 5000)
@@ -599,6 +614,7 @@ export default function App() {
                 </p>
               </>
             )}
+            {configured && role === 'owner' && <PushToggle variant="side" onMessage={toast} />}
             <button type="button" className="link-btn" onClick={logout}>
               Đăng xuất
             </button>
@@ -618,6 +634,7 @@ export default function App() {
             </div>
             <div className="actions role-mobile">
               {!configured && <RoleSwitch role={role} setRole={setRole} />}
+              {configured && role === 'owner' && <PushToggle variant="mobile" onMessage={toast} />}
               <button type="button" className="btn btn-secondary" onClick={logout}>
                 Đăng xuất
               </button>
