@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { CHANNELS, PRODUCTS, channelPrice } from '../data/seed.js'
 import { deaccent, money, pct } from '../lib/format.js'
 import { NumInput } from '../components/bits.jsx'
 import Reveal from '../components/Reveal.jsx'
 
+const PRESET_COLORS = ['Đen', 'Trắng', 'Xám', 'Kem', 'Navy']
 const PRESET_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'Freesize']
 
 // "Áo thun Phở" + "Đen" + "M" -> "PC-ATP-DEN-M"; Freesize rút thành OS như các SKU cũ
@@ -114,6 +115,11 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
             <div className="field">
               <label htmlFor="np-color">Màu (một mẫu có thể nhiều màu, mỗi màu là một nhóm SKU)</label>
               <div className="np-sizes">
+                {PRESET_COLORS.filter((c) => !colors.includes(c)).map((c) => (
+                  <button key={c} type="button" className="np-chip" aria-pressed="false" onClick={() => setColors((l) => [...l, c])}>
+                    + {c}
+                  </button>
+                ))}
                 {colors.map((c) => (
                   <button key={c} type="button" className="np-chip" aria-pressed="true" aria-label={`Bỏ màu ${c}`} onClick={() => setColors((l) => l.filter((x) => x !== c))}>
                     {c} ×
@@ -240,17 +246,27 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
             {items.length === 0 ? (
               <p className="hint">Chọn size ở trên để nhập số lượng.</p>
             ) : (
-              <div className="np-stock">
-                {items.map((it) => (
-                  <div className="field" key={it.key}>
-                    <label htmlFor={`np-q-${it.key}`}>{it.label}</label>
-                    <NumInput
-                      id={`np-q-${it.key}`}
-                      className="input"
-                      value={qty[it.key] ?? 0}
-                      onCommit={(n) => setQty((q) => ({ ...q, [it.key]: n }))}
-                    />
-                  </div>
+              <div className="np-matrix" style={{ '--cols': ordered.length }}>
+                <span />
+                {ordered.map((sz) => (
+                  <span className="np-mx-h" key={sz}>{sz}</span>
+                ))}
+                {colorList.map((c) => (
+                  <Fragment key={c || '_'}>
+                    <span className="np-mx-r">{c || 'Tồn'}</span>
+                    {ordered.map((sz) => {
+                      const k = `${c}|${sz}`
+                      return (
+                        <NumInput
+                          key={k}
+                          className="input"
+                          value={qty[k] ?? 0}
+                          aria-label={`Tồn ${c ? c + ' ' : ''}${sz}`}
+                          onCommit={(n) => setQty((q) => ({ ...q, [k]: n }))}
+                        />
+                      )
+                    })}
+                  </Fragment>
                 ))}
               </div>
             )}
