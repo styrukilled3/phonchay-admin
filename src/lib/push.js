@@ -65,6 +65,11 @@ export async function notifyNewRequest(requestId) {
   await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'notify', request_id: requestId }) })
 }
 
+// Nhân viên vừa gửi báo cáo bán của một ngày/kênh (key = 'YYYY-MM-DD|KÊNH'): báo owner số lượng bán
+export async function notifySales(key) {
+  await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'sales', key }) })
+}
+
 // Owner vừa duyệt/từ chối yêu cầu: báo máy chủ gửi thông báo ngược lại cho nhân viên đã gửi
 export async function notifyResolved(requestId) {
   await fetch(FN, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'resolved', request_id: requestId }) })

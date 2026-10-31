@@ -1,6 +1,7 @@
 // Gửi thông báo đẩy tới thiết bị của owner khi có yêu cầu lấy hàng mới.
 // Nhân viên gửi yêu cầu mới: { action: 'notify', request_id } -> thông báo cho owner.
 // Owner duyệt/từ chối: { action: 'resolved', request_id } -> thông báo ngược lại cho nhân viên đã gửi (không biết ai thì cho mọi nhân viên).
+// Nhân viên gửi báo cáo bán trong ngày: { action: 'sales', key: 'YYYY-MM-DD|KÊNH' } -> thông báo cho owner (số lượng, không có tiền).
 // Cũng trả khóa công khai VAPID cho app đăng ký thiết bị: { action: 'public-key' }.
 // Khóa VAPID tự sinh lần đầu và nằm trong bảng push_config (chỉ service role đọc được).
 import webpush from "npm:web-push@3.6.7";
@@ -86,6 +87,28 @@ Deno.serve(async (req) => {
     if (body.action === "test") {
       const payload = JSON.stringify({ title: "PHONCHAY", body: "Thông báo thử: máy này nhận được rồi.", url: "./", tag: "test" });
       return json(await sendAll(payload, vapid, "user_id", u.user.id));
+    }
+
+    if (body.action === "sales") {
+      const key = String(body.key ?? "");
+      const [date, chId] = key.split("|");
+      const { data: doc } = await admin.from("app_docs").select("data").eq("key", "lines").maybeSingle();
+      const rows = (doc?.data?.sentRows?.[key] ?? []) as any[];
+      if (!date || !chId || rows.length === 0) return json({ sent: 0, reason: "no-report" });
+      const sig = await sha(JSON.stringify(rows.map((r) => [r.sku, r.qty])));
+      const { count } = await admin.from("push_sent").select("request_id", { count: "exact", head: true }).like("request_id", `${key}:sales:%`);
+      const dup = await admin.from("push_sent").insert({ request_id: `${key}:sales:${sig}` });
+      if (dup.error) return json({ sent: 0, reason: "already-sent" });
+      const qty = rows.reduce((a, r) => a + (Number(r.qty) || 0), 0);
+      const [, mm, dd] = date.split("-");
+      const who = (u.user.email ?? "").split("@")[0];
+      const payload = JSON.stringify({
+        title: (count ?? 0) > 0 ? "Báo cáo bán được sửa" : "Báo cáo bán mới",
+        body: `${CHANNEL_NAME[chId] ?? chId} · ${dd}/${mm}: ${rows.length} SKU, ${qty} sp đã bán${who ? ` (${who})` : ""}.`,
+        url: "./",
+        tag: `sales-${key}`,
+      });
+      return json(await sendAll(payload, vapid, "role", "owner"));
     }
 
     if (body.action === "notify" || body.action === "resolved") {

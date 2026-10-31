@@ -35,7 +35,7 @@ import { clearMemory, pack, pullAll, pushDoc, unpack } from './lib/sync.js'
 import { configured, restore, signOut, takeRecoveryToken } from './lib/auth.js'
 import Login from './screens/Login.jsx'
 import PushToggle from './components/PushToggle.jsx'
-import { notifyNewRequest, notifyResolved } from './lib/push.js'
+import { notifyNewRequest, notifyResolved, notifySales } from './lib/push.js'
 
 const SCREENS = [
   { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
@@ -98,6 +98,7 @@ export default function App() {
   const dirty = useRef(false)
   const chain = useRef(Promise.resolve())
   const latest = useRef(null)
+  const salesSeen = useRef(new Map()) // ngày|kênh -> chữ ký (sku, số lượng) báo cáo bán đã biết, để chỉ báo owner khi báo cáo mới hoặc được sửa
   const reqSeen = useRef(new Map()) // id yêu cầu -> trạng thái đã biết, để biết khi nào có yêu cầu mới / vừa được duyệt
 
   const visible = SCREENS.filter((s) => s.roles.includes(role))
@@ -186,7 +187,10 @@ export default function App() {
       p.requests.forEach((r) => reqSeen.current.set(r.id, r.status))
     }
     if (p.sent) setSent(p.sent)
-    if (p.sentRows) setSentRows(p.sentRows)
+    if (p.sentRows) {
+      setSentRows(p.sentRows)
+      Object.entries(p.sentRows).forEach(([k, rs]) => salesSeen.current.set(k, JSON.stringify(rs.map((r) => [r.sku, r.qty]))))
+    }
     if (p.receipts) setReceipts(p.receipts)
     setPriceVer((v) => v + 1)
     setSyncTick((t) => t + 1)
@@ -278,6 +282,15 @@ export default function App() {
           const after = pack(latest.current.role, latest.current.state)
           dirty.current = Object.keys(after).some((k) => JSON.stringify(after[k]) !== lastPushed.current[k])
           if (allOk && now.role === 'owner') clearSaved()
+          // Báo cáo bán đã lưu lên máy chủ: nhân viên gửi mới hoặc sửa thì báo owner số lượng bán
+          if (lastPushed.current.lines === JSON.stringify(out.lines)) {
+            for (const [k, rs] of Object.entries(now.state.sentRows)) {
+              const sig = JSON.stringify(rs.map((r) => [r.sku, r.qty]))
+              if (salesSeen.current.get(k) === sig) continue
+              salesSeen.current.set(k, sig)
+              if (now.role === 'staff') notifySales(k).catch(() => {})
+            }
+          }
           // Yêu cầu lấy hàng đã lưu lên máy chủ: nhân viên gửi mới thì báo owner, owner duyệt/từ chối thì báo ngược lại nhân viên
           if (lastPushed.current.inventory === JSON.stringify(out.inventory)) {
             for (const r of now.state.requests) {
