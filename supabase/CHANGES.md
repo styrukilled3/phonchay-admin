@@ -8,3 +8,5 @@ Mỗi bản SQL do Claude xuất, STY tự paste vào SQL Editor. Claude không 
 |---|---|---|---|
 | 1 | 31/10/2026 | SQL-001 `sql/001_schema.sql`: bảng `app_docs`, RLS, hàm `save_doc`, `is_owner` | Tạo bảng và quyền. Áp lúc đầu qua kết nối, từ giờ chỉ paste tay |
 | 2 | 31/10/2026 | SQL-002 (không commit): tạo tài khoản owner (email + mật khẩu tạm, `app_metadata.role = owner`) | Thêm 1 user. File chứa mật khẩu nên không commit |
+| 3 | 31/10/2026 | SQL-003: SELECT chỉ đọc `app_docs` (key, rev, updated_at) | Không đổi gì, dùng để kiểm dữ liệu đã lên server chưa |
+| 4 | 31/10/2026 | SQL-004 (không commit): tạo tài khoản nhân viên `styrukilled@gmail.com`, `app_metadata.role = staff`, mật khẩu tạm | Thêm 1 user staff. Đọc/ghi được `catalog`, `inventory`, `lines`, không đọc được dòng `owner` |
