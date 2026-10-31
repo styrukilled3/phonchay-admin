@@ -201,14 +201,15 @@ export default function Dashboard({ range, setRange }) {
         <header>
           <h2>Đọc nhanh</h2>
         </header>
-        <p className="small">
-          <b>{best.c.name}</b> dẫn đầu về net với {money(best.a.net)} ({pct(best.a.net / cur.net)} tổng).{' '}
-          <b>{worst.c.name}</b> có margin thấp nhất {pct(worst.a.margin)} vì phí kênh {pct(worst.c.fee)} và
-          giá vốn ăn {pct(worst.a.cogs / Math.max(1, worst.a.net))} doanh thu net.
-        </p>
-        <p className="hint">
-          Số trong bản demo là dữ liệu giả sinh tại chỗ, không phải doanh thu thật của PHONCHAY.
-        </p>
+        {cur.net > 0 ? (
+          <p className="small">
+            <b>{best.c.name}</b> dẫn đầu về net với {money(best.a.net)} ({pct(best.a.net / cur.net)} tổng).{' '}
+            <b>{worst.c.name}</b> có margin thấp nhất {pct(worst.a.margin)} vì phí kênh {pct(worst.c.fee)} và
+            giá vốn ăn {pct(worst.a.cogs / Math.max(1, worst.a.net))} doanh thu net.
+          </p>
+        ) : (
+          <p className="small muted">Chưa có doanh số trong {range} ngày này. Nhân viên gửi ngày bán ở mục Kênh bán thì số sẽ hiện ở đây.</p>
+        )}
       </Reveal>
     </>
   )
