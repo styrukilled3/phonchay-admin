@@ -33,10 +33,10 @@ import { initialLots, putBack, takeFifo, totalFor } from './lib/lots.js'
 import { clearSaved, loadSaved, save } from './lib/persist.js'
 
 const SCREENS = [
+  { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
   { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'ZONE SELL', roles: ['staff', 'owner'] },
   { id: 'history', key: '02', label: 'Lịch sử', short: 'Lịch sử', title: 'Lịch sử nhập', roles: ['staff', 'owner'] },
   { id: 'warehouse', key: '03', label: 'Kho tổng', short: 'Kho', title: 'Kho tổng', roles: ['staff', 'owner'] },
-  { id: 'dashboard', key: '04', label: 'Dashboard', short: 'Doanh thu', title: 'Doanh thu theo kênh', roles: ['owner'] },
   { id: 'products', key: '05', label: 'Sản phẩm', short: 'SKU', title: 'Sản phẩm và bảng giá', roles: ['owner'] },
   { id: 'lock', key: '06', label: 'Chốt sổ', short: 'Chốt', title: 'Chốt sổ và audit', roles: ['owner'] },
 ]
@@ -379,14 +379,14 @@ export default function App() {
           </div>
 
           <nav className="nav" aria-label="Điều hướng chính">
-            {visible.map((s) => (
+            {visible.map((s, i) => (
               <button
                 key={s.id}
                 type="button"
                 aria-current={s.id === active.id ? 'page' : undefined}
                 onClick={() => go(s.id)}
               >
-                <span className="nav-key">{s.key}</span>
+                <span className="nav-key">{String(i + 1).padStart(2, '0')}</span>
                 {s.label}
               </button>
             ))}
@@ -498,14 +498,14 @@ export default function App() {
       </div>
 
       <nav className="botnav" aria-label="Điều hướng">
-        {visible.map((s) => (
+        {visible.map((s, i) => (
           <button
             key={s.id}
             type="button"
             aria-current={s.id === active.id ? 'page' : undefined}
             onClick={() => go(s.id)}
           >
-            <span className="ico">{s.key}</span>
+            <span className="ico">{String(i + 1).padStart(2, '0')}</span>
             {s.short}
           </button>
         ))}
