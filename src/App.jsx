@@ -30,7 +30,8 @@ import RequestStock from './screens/RequestStock.jsx'
 import NewProduct from './screens/NewProduct.jsx'
 import StockBar from './components/StockBar.jsx'
 import { initialLots, putBack, takeFifo, totalFor } from './lib/lots.js'
-import { clearSaved, loadSaved, save } from './lib/persist.js'
+import { clearSaved, loadDrafts, loadSaved, save, saveDrafts } from './lib/persist.js'
+import { clearMemory, pack, pullAll, pushDoc, unpack } from './lib/sync.js'
 import { configured, restore, signOut, takeRecoveryToken } from './lib/auth.js'
 import Login from './screens/Login.jsx'
 
@@ -72,7 +73,7 @@ export default function App() {
   const [openCh, setOpenCh] = useState(null)
   const [date, setDate] = useState(TODAY)
   const [range, setRange] = useState(30)
-  const [drafts, setDrafts] = useState(SAVED?.drafts ?? {})
+  const [drafts, setDrafts] = useState(SAVED?.drafts ?? loadDrafts())
   const [sent, setSent] = useState(SAVED?.sent ?? {})
   const [stock, setStock] = useState(SAVED?.stock ?? initialStock)
   const [wh, setWh] = useState(SAVED?.wh ?? initialWarehouse)
@@ -86,6 +87,15 @@ export default function App() {
   const [newFrom, setNewFrom] = useState(null)
   const [toastState, setToastState] = useState(null)
   const timer = useRef(null)
+  const [hydrated, setHydrated] = useState(!configured) // đã tải xong dữ liệu từ Supabase
+  const [syncTick, setSyncTick] = useState(0)
+  const [syncErr, setSyncErr] = useState('')
+  const revs = useRef({}) // key -> rev đã biết
+  const lastPushed = useRef({}) // key -> JSON đã lưu lên máy chủ
+  const applied = useRef(new Set()) // key vừa tải về, lần chạy kế tiếp lấy làm mốc
+  const dirty = useRef(false)
+  const chain = useRef(Promise.resolve())
+  const latest = useRef(null)
 
   const visible = SCREENS.filter((s) => s.roles.includes(role))
   const active = visible.find((s) => s.id === screen) ?? visible[0]
@@ -140,12 +150,11 @@ export default function App() {
     return () => document.removeEventListener('pointermove', move)
   }, [])
 
-  // Mọi thay đổi (kể cả sửa giá, công thức kênh qua priceVer) ghi xuống trình duyệt
-  useEffect(() => {
-    save({ wh, stock, lots, requests, receipts, sentRows, sent, drafts })
-  }, [wh, stock, lots, requests, receipts, sentRows, sent, drafts, priceVer])
-
   function resetAll() {
+    if (configured) {
+      toast('Dữ liệu đã nằm trên máy chủ, không xóa từ app được. Cần xóa thì nhờ tao xuất SQL.')
+      return
+    }
     if (!window.confirm('Xóa toàn bộ sản phẩm, tồn kho, doanh số đã nhập và làm lại từ đầu?')) return
     clearSaved()
     window.location.reload()
@@ -156,6 +165,139 @@ export default function App() {
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setToastState(null), 4000)
   }, [])
+
+  // ---------- Đồng bộ Supabase ----------
+  latest.current = { role: session?.role, state: { wh, stock, lots, requests, receipts, sentRows, sent } }
+
+  const applyDocs = useCallback((docs, roleNow) => {
+    Object.entries(docs).forEach(([k, v]) => {
+      revs.current[k] = v.rev
+      applied.current.add(k)
+    })
+    const p = unpack(docs, roleNow)
+    if (p.wh) setWh(p.wh)
+    if (p.stock) setStock(p.stock)
+    if (p.lots) setLots(p.lots)
+    if (p.requests) setRequests(p.requests)
+    if (p.sent) setSent(p.sent)
+    if (p.sentRows) setSentRows(p.sentRows)
+    if (p.receipts) setReceipts(p.receipts)
+    setPriceVer((v) => v + 1)
+    setSyncTick((t) => t + 1)
+  }, [])
+
+  const resetLocal = useCallback(() => {
+    clearMemory()
+    setWh({})
+    setStock({})
+    setLots(initialLots({}))
+    setRequests([])
+    setSent({})
+    setSentRows({})
+    setReceipts([])
+  }, [])
+
+  // Đăng nhập xong: tải 6 dòng dữ liệu. Máy chủ còn trống mà là owner thì dữ liệu đang nằm trong trình duyệt sẽ được đẩy lên.
+  useEffect(() => {
+    if (!configured || !session) return
+    let alive = true
+    revs.current = {}
+    lastPushed.current = {}
+    applied.current = new Set()
+    setHydrated(false)
+    setSyncErr('')
+    pullAll()
+      .then((docs) => {
+        if (!alive) return
+        const has = Object.keys(docs).length > 0
+        if (has) {
+          resetLocal()
+          applyDocs(docs, session.role)
+          if (session.role === 'owner') clearSaved()
+        } else if (session.role !== 'owner') {
+          resetLocal()
+          ;['catalog', 'inventory', 'lines'].forEach((k) => applied.current.add(k)) // nhân viên: lấy trạng thái trống làm mốc, không đẩy gì
+        }
+        setSyncTick((t) => t + 1)
+        setHydrated(true)
+      })
+      .catch(() => alive && setSyncErr('Không tải được dữ liệu từ máy chủ. Kiểm tra mạng rồi tải lại trang.'))
+    return () => {
+      alive = false
+    }
+  }, [session, applyDocs, resetLocal])
+
+  // Mọi thay đổi: ghi trình duyệt (chế độ thử) hoặc đẩy lên máy chủ sau 0,7 giây (đã nối Supabase)
+  useEffect(() => {
+    if (!configured) {
+      save({ wh, stock, lots, requests, receipts, sentRows, sent, drafts })
+      return
+    }
+    saveDrafts(drafts)
+    if (!hydrated || !session) return
+    const cur = latest.current
+    const docs = pack(cur.role, cur.state)
+    const json = Object.fromEntries(Object.entries(docs).map(([k, v]) => [k, JSON.stringify(v)]))
+    applied.current.forEach((k) => {
+      lastPushed.current[k] = json[k]
+    })
+    applied.current.clear()
+    if (!Object.keys(json).some((k) => json[k] !== lastPushed.current[k])) {
+      dirty.current = false
+      return
+    }
+    dirty.current = true
+    const t = setTimeout(() => {
+      chain.current = chain.current.then(async () => {
+        const now = latest.current
+        const out = pack(now.role, now.state)
+        let allOk = true
+        try {
+          for (const k of Object.keys(out)) {
+            const js = JSON.stringify(out[k])
+            if (js === lastPushed.current[k]) continue
+            const r = await pushDoc(k, out[k], revs.current[k] ?? 0)
+            if (r.conflict) {
+              allOk = false
+              const fresh = await pullAll()
+              applyDocs(fresh[k] ? { [k]: fresh[k] } : {}, now.role)
+              toast('Máy khác vừa lưu. Đã tải bản mới, thao tác vừa rồi chưa được lưu, nhập lại giúp.')
+              continue
+            }
+            revs.current[k] = r.rev
+            lastPushed.current[k] = js
+          }
+          setSyncErr('')
+          if (allOk && now.role === 'owner') clearSaved()
+        } catch {
+          setSyncErr('Chưa lưu được lên máy chủ, đang thử lại…')
+          setTimeout(() => setSyncTick((x) => x + 1), 5000)
+        }
+      })
+    }, 700)
+    return () => clearTimeout(t)
+  }, [wh, stock, lots, requests, receipts, sentRows, sent, drafts, priceVer, hydrated, session, syncTick, applyDocs, toast])
+
+  // Máy khác lưu thì kéo về: mỗi 15 giây và khi quay lại tab, chỉ khi máy này không còn thay đổi chưa lưu
+  useEffect(() => {
+    if (!configured || !hydrated || !session) return
+    const tick = async () => {
+      if (document.hidden || dirty.current) return
+      try {
+        const docs = await pullAll()
+        const newer = Object.fromEntries(Object.entries(docs).filter(([k, v]) => v.rev > (revs.current[k] ?? 0)))
+        if (Object.keys(newer).length && !dirty.current) applyDocs(newer, session.role)
+      } catch {
+        /* lần sau thử lại */
+      }
+    }
+    const id = setInterval(tick, 15000)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [hydrated, session, applyDocs])
 
   const key = openCh ? `${date}|${openCh}` : ''
   const rows = drafts[key] ?? []
@@ -403,6 +545,12 @@ export default function App() {
 
   if (session === undefined) return null
   if (!session) return <Login onSignedIn={signedIn} recoveryToken={recovery} onRecovered={() => setRecovery(null)} />
+  if (configured && !hydrated)
+    return (
+      <div className="sync-load" role="status">
+        {syncErr || 'Đang tải dữ liệu…'}
+      </div>
+    )
 
   return (
     <>
@@ -563,6 +711,11 @@ export default function App() {
         ))}
       </nav>
 
+      {configured && syncErr && hydrated && (
+        <div className="sync-err" role="status">
+          {syncErr}
+        </div>
+      )}
       {toastState && (
         <div className="toast" role="status">
           <span>{toastState.message}</span>

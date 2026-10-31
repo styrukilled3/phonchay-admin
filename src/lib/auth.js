@@ -5,6 +5,7 @@ const URL_BASE = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 export const configured = Boolean(URL_BASE && ANON)
+export const supabase = { url: URL_BASE, anon: ANON }
 
 const STORE = 'phonchay-session'
 

@@ -36,3 +36,22 @@ export function clearSaved() {
     /* bỏ qua */
   }
 }
+
+// Khi đã nối Supabase, dữ liệu nằm trên máy chủ. Chỉ giữ bản nháp nhập dở (SKU + số lượng, không có tiền) trong trình duyệt.
+const DRAFTS = 'phonchay-drafts-v1'
+
+export function loadDrafts() {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFTS)) ?? {}
+  } catch {
+    return {}
+  }
+}
+
+export function saveDrafts(d) {
+  try {
+    localStorage.setItem(DRAFTS, JSON.stringify(d))
+  } catch {
+    /* bỏ qua */
+  }
+}
