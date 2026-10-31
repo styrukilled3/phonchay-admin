@@ -1,0 +1,6 @@
+{
+  // Cloudflare: phục vụ thư mục dist (kết quả của npm run build) như web tĩnh
+  "name": "phonchay-admin",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" }
+}
