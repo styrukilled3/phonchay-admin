@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CHANNELS, PRODUCTS, channel, needsPrice, product } from '../data/seed.js'
+import { PRODUCTS, STOCKED, channel, needsPrice, product } from '../data/seed.js'
 import { skuUnits, stockStats, stockStatus } from '../lib/stock.js'
 import { dmy } from '../lib/format.js'
 import { Tag } from '../components/bits.jsx'
@@ -73,7 +73,7 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
           )}
 
           <div className="zone-actions zone-ch">
-            {CHANNELS.map((c) => (
+            {STOCKED.map((c) => (
               <Reveal as="button" type="button" className="act-box" key={c.id} onClick={() => onRequest(c.id)}>
                 <span className="act-plus" aria-hidden="true">+</span>
                 <span className="act-txt">
@@ -184,7 +184,7 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
                 <th>SKU</th>
                 <th>Sản phẩm</th>
                 <th className="num">Kho tổng</th>
-                {CHANNELS.map((c) => (
+                {STOCKED.map((c) => (
                   <th key={c.id} className="num">{c.code}</th>
                 ))}
                 <th className="num">Tổng kênh</th>
@@ -198,7 +198,7 @@ export default function Warehouse({ role, wh, stock, requests, onRestock, onCrea
                     {p.name} · {p.variant} <Badge status={stockStatus(wh, p)} />
                   </td>
                   <td className="num"><b>{wh[p.sku] ?? 0}</b></td>
-                  {CHANNELS.map((c) => (
+                  {STOCKED.map((c) => (
                     <td key={c.id} className="num">{stock[p.sku]?.[c.id] ?? 0}</td>
                   ))}
                   <td className="num">{skuUnits(stock, p.sku)}</td>

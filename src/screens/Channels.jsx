@@ -10,7 +10,7 @@ import Reveal from '../components/Reveal.jsx'
 import { chUnits } from '../lib/stock.js'
 
 
-export default function Channels({ role, date, statusOf, onOpen, stock }) {
+export default function Channels({ role, date, statusOf, onOpen, stock, wh }) {
   const owner = role === 'owner'
   const [range, setRange] = useState(14)
   const TREND_DAYS = range
@@ -143,8 +143,8 @@ export default function Channels({ role, date, statusOf, onOpen, stock }) {
                 <span className="v">{r.today.qty ? <CountUp value={r.today.qty} /> : '—'}</span>
               </span>
               <span className="box-stat">
-                <span className="k">Tồn kho</span>
-                <span className="v"><CountUp value={chUnits(stock, r.c.id)} /></span>
+                <span className="k">{r.c.direct ? 'Kho tổng' : 'Tồn kho'}</span>
+                <span className="v"><CountUp value={r.c.direct ? Object.values(wh).reduce((s, n) => s + n, 0) : chUnits(stock, r.c.id)} /></span>
               </span>
               {role === 'owner' && (
                 <span className="box-stat">

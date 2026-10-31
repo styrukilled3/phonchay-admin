@@ -6,9 +6,13 @@ export const CHANNELS = [
   { id: '808', code: '808', name: '808', fee: 0.0, v: '--ch-1' },
   { id: 'TLD', code: 'TLD', name: 'THAILAN', fee: 0.0, v: '--ch-2' },
   { id: 'HP', code: 'HP', name: 'HAIPHONG', fee: 0.0, v: '--ch-3' },
-  { id: 'SHP', code: 'SHP', name: 'SHOPPE', fee: 0.11, v: '--ch-4' },
-  { id: 'SPF', code: 'SPF', name: 'SHOPIFY', fee: 0.02, v: '--ch-5' },
+  { id: 'SHP', code: 'SHP', name: 'SHOPPE', fee: 0.11, v: '--ch-4', direct: true },
+  { id: 'SPF', code: 'SPF', name: 'SHOPIFY', fee: 0.02, v: '--ch-5', direct: true },
+  { id: 'IG', code: 'IG', name: 'IG', fee: 0.0, v: '--ch-6', direct: true },
 ]
+
+// direct: kênh bán trực tiếp. Không có tồn riêng, nhân viên chỉ báo số bán mỗi ngày và trừ thẳng kho tổng.
+export const STOCKED = CHANNELS.filter((c) => !c.direct)
 
 // Rỗng: SKU do mày tạo ở Kho tổng. Dữ liệu lưu trong trình duyệt (lib/persist.js).
 export const PRODUCTS = []
@@ -21,6 +25,7 @@ export const CH_RULE = {
   HP: { kind: 'amount', sign: -1, value: 10000 },
   SHP: { kind: 'amount', sign: 1, value: 10000 },
   SPF: { kind: 'amount', sign: -1, value: 10000 },
+  IG: { kind: 'amount', sign: 1, value: 0 },
 }
 
 export function setRule(chId, patch) {

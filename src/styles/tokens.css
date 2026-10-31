@@ -40,12 +40,13 @@
   --chart-hot: oklch(0.72 0.17 48);
   --danger: oklch(0.72 0.12 22);
 
-  /* 5 kênh: năm bậc xám, phân biệt bằng độ sáng + nhãn. Thấp nhất vẫn >3:1 trên surface */
+  /* 6 kênh: sáu bậc xám, phân biệt bằng độ sáng + nhãn. Thấp nhất vẫn >3:1 trên surface */
   --ch-1: oklch(0.96 0 0);
-  --ch-2: oklch(0.84 0 0);
-  --ch-3: oklch(0.72 0 0);
-  --ch-4: oklch(0.62 0 0);
-  --ch-5: oklch(0.52 0 0);
+  --ch-2: oklch(0.87 0 0);
+  --ch-3: oklch(0.78 0 0);
+  --ch-4: oklch(0.69 0 0);
+  --ch-5: oklch(0.60 0 0);
+  --ch-6: oklch(0.52 0 0);
 
   /* Một họ chữ duy nhất: geometric, dấu tiếng Việt chuẩn.
      Số dùng tabular-nums của chính nó, không cần font mono. */

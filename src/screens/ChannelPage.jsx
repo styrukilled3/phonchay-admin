@@ -9,7 +9,7 @@ import { chUnits } from '../lib/stock.js'
 
 const TREND_DAYS = 30
 
-export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...entryProps }) {
+export default function ChannelPage({ ch, role, onBack, onRequest, stock, wh, ...entryProps }) {
   const owner = role === 'owner'
   const c = channel(ch)
   const trend = DATES.slice(-TREND_DAYS)
@@ -31,9 +31,11 @@ export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...ent
           </svg>
           Tất cả kênh
         </button>
-        <button type="button" className="btn btn-secondary ch-req" onClick={onRequest}>
-          Yêu cầu lấy hàng
-        </button>
+        {!c.direct && (
+          <button type="button" className="btn btn-secondary ch-req" onClick={onRequest}>
+            Yêu cầu lấy hàng
+          </button>
+        )}
       </div>
 
       <section className="ch-hero" style={{ '--ch': `var(${c.v})` }}>
@@ -59,8 +61,8 @@ export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...ent
           </div>
           {!owner && (
             <div>
-              <dt>Tồn kho kênh</dt>
-              <dd className="big"><CountUp value={chUnits(stock, ch)} /></dd>
+              <dt>{c.direct ? 'Kho tổng' : 'Tồn kho kênh'}</dt>
+              <dd className="big"><CountUp value={c.direct ? Object.values(wh).reduce((s, n) => s + n, 0) : chUnits(stock, ch)} /></dd>
               <dd className="sub">sp còn bán được</dd>
             </div>
           )}
@@ -89,12 +91,12 @@ export default function ChannelPage({ ch, role, onBack, onRequest, stock, ...ent
 
       <Reveal as="section" className="card">
         <header>
-          <h2>Tồn kho kênh {c.name}</h2>
-          <span className="hint">Chỉ bán được trong số này. Hết thì gửi yêu cầu lấy hàng.</span>
+          <h2>{c.direct ? 'Kho tổng' : `Tồn kho kênh ${c.name}`}</h2>
+          <span className="hint">{c.direct ? 'Kênh bán trực tiếp: báo bán là trừ thẳng kho tổng. Hết hàng thì nhập hàng ở Kho tổng.' : 'Chỉ bán được trong số này. Hết thì gửi yêu cầu lấy hàng.'}</span>
         </header>
         <ul className="stk-list">
           {PRODUCTS.map((p) => {
-            const n = stock[p.sku]?.[ch] ?? 0
+            const n = c.direct ? (wh[p.sku] ?? 0) : (stock[p.sku]?.[ch] ?? 0)
             return (
               <li key={p.sku} className={n === 0 ? 'is-zero' : n < 5 ? 'is-low' : ''}>
                 <span>{product(p.sku).name} · {p.variant}</span>

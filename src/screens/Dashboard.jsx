@@ -144,7 +144,7 @@ export default function Dashboard({ range, setRange }) {
 
       <Reveal as="section" className="block">
         <div className="block-head">
-          <h2>5 kênh bán</h2>
+          <h2>{CHANNELS.length} kênh bán</h2>
           <span className="hint">Xếp theo net. Margin thấp là kênh ăn phí và hoàn nhiều.</span>
         </div>
 

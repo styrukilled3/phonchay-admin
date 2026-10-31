@@ -246,6 +246,8 @@ export default function App() {
   // Tồn bán được của SKU ở kênh đang mở: tồn kênh cộng lại phần đã gửi trước đó (gửi lại thì tính lại)
   function availOf(sku) {
     const prev = (sentRows[key] ?? []).find((r) => r.sku === sku)?.qty ?? 0
+    // Kênh trực tiếp bán thẳng từ kho tổng, không có tồn riêng
+    if (channel(openCh).direct) return (wh[sku] ?? 0) + prev
     return (stock[sku]?.[openCh] ?? 0) + prev
   }
 
@@ -277,7 +279,34 @@ export default function App() {
   }
 
   // Gửi ngày: lấy hàng theo lô FIFO, ghi số bán theo giá lô vào doanh thu và trừ tồn kênh
+  function sendDirectDay() {
+    const prev = sentRows[key] ?? []
+    const next = rows
+      .filter((r) => r.qty > 0)
+      .map((r) => ({ sku: r.sku, qty: r.qty, price: prev.find((p) => p.sku === r.sku)?.price ?? priceOf(r.sku, openCh) }))
+    const short = next.find((r) => (wh[r.sku] ?? 0) + (prev.find((p) => p.sku === r.sku)?.qty ?? 0) < r.qty)
+    if (short) {
+      toast(`${short.sku} không đủ ở kho tổng. Nhập hàng trước rồi gửi.`)
+      return
+    }
+    setWh((w) => {
+      const out = { ...w }
+      prev.forEach((r) => {
+        out[r.sku] = (out[r.sku] ?? 0) + r.qty
+      })
+      next.forEach((r) => {
+        out[r.sku] = (out[r.sku] ?? 0) - r.qty
+      })
+      return out
+    })
+    setDayLines(date, openCh, next)
+    setSentRows((m) => ({ ...m, [key]: next }))
+    setSent((x) => ({ ...x, [key]: true }))
+    toast(`Đã gửi ngày ${dmy(date)} · ${channel(openCh).name}, trừ thẳng kho tổng.`)
+  }
+
   function sendDay() {
+    if (channel(openCh).direct) return sendDirectDay()
     const prev = sentRows[key] ?? []
     const L = { ...(lots[openCh] ?? {}) }
     prev.forEach((r) => {
@@ -411,6 +440,7 @@ export default function App() {
                   onBack={() => setOpenCh(null)}
                   onRequest={() => openSub('request')}
                   stock={stock}
+                  wh={wh}
                   avail={availOf}
                   lineTotal={lineTotal}
                   date={date}
@@ -423,7 +453,7 @@ export default function App() {
                   onSave={() => toast(`Đã lưu nháp ${dmy(date)} · ${channel(openCh).name}.`)}
                 />
               ) : (
-                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} stock={stock} />
+                <Channels role={role} date={date} statusOf={statusOf} onOpen={openChannel} stock={stock} wh={wh} />
               ))}
             {active.id === 'warehouse' &&
               (inWh === 'restock' ? (

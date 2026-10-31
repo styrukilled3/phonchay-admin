@@ -11,6 +11,8 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
   const owner = role === 'owner'
   const locked = status === 'locked'
 
+  const direct = !!channel(ch).direct
+  const where = direct ? 'kho tổng' : 'kênh này'
   const sub = rows.reduce((a, r) => a + lineTotal(r.sku, r.qty), 0)
   const qty = rows.reduce((a, r) => a + r.qty, 0)
   const fee = Math.round(sub * chn.fee)
@@ -31,13 +33,13 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
     const max = avail(sku)
     if (found) {
       if (found.qty >= max) {
-        toast(`${sku} chỉ còn ${max} ở kênh này.`)
+        toast(`${sku} chỉ còn ${max} ở ${where}.`)
       } else {
         setRows(rows.map((r) => (r.sku === sku ? { ...r, qty: r.qty + 1 } : r)))
         toast(`Đã cộng dồn vào dòng ${sku} (chống nhập trùng).`)
       }
     } else if (max <= 0) {
-      toast(`${sku} hết tồn ở kênh này. Gửi yêu cầu lấy hàng từ kho tổng.`)
+      toast(direct ? `${sku} hết hàng ở kho tổng.` : `${sku} hết tồn ở kênh này. Gửi yêu cầu lấy hàng từ kho tổng.`)
     } else {
       setRows([...rows, { sku, qty: 1, price: priceOf(sku, ch), override: false }])
     }
@@ -49,7 +51,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
     if (next.qty != null) {
       const max = avail(rows[idx].sku)
       if (next.qty > max) {
-        toast(`${rows[idx].sku} chỉ còn ${max} ở kênh này.`)
+        toast(`${rows[idx].sku} chỉ còn ${max} ở ${where}.`)
         next = { ...next, qty: max }
       }
     }
@@ -184,7 +186,7 @@ export default function Entry({ role, date, setDate, ch, rows, setRows, status, 
                       <span className="nm">
                         {p.name} · {p.variant}
                       </span>
-                      <span className="nm">Tồn kênh {avail(r.sku)}</span>
+                      <span className="nm">{direct ? 'Kho tổng' : 'Tồn kênh'} {avail(r.sku)}</span>
                     </div>
 
                     {owner && (
