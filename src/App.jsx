@@ -268,6 +268,9 @@ export default function App() {
             lastPushed.current[k] = js
           }
           setSyncErr('')
+          // còn thay đổi chưa lưu (gõ thêm lúc đang đẩy) thì giữ cờ dirty, hết thì hạ để polling chạy tiếp
+          const after = pack(latest.current.role, latest.current.state)
+          dirty.current = Object.keys(after).some((k) => JSON.stringify(after[k]) !== lastPushed.current[k])
           if (allOk && now.role === 'owner') clearSaved()
         } catch {
           setSyncErr('Chưa lưu được lên máy chủ, đang thử lại…')
