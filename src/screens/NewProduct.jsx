@@ -17,7 +17,8 @@ function buildSku(name, color, size) {
 export default function NewProduct({ role, inline = false, onBack, onSave, toast }) {
   const owner = role === 'owner'
   const [name, setName] = useState('')
-  const [color, setColor] = useState('')
+  const [colors, setColors] = useState([]) // mỗi màu x mỗi size là một SKU
+  const [colorIn, setColorIn] = useState('')
   const [sizes, setSizes] = useState([]) // mỗi size là một SKU riêng
   const [customSize, setCustomSize] = useState('')
   const [cost, setCost] = useState(0)
@@ -31,16 +32,23 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
     const ib = PRESET_SIZES.indexOf(b)
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
   })
-  const items = ordered.map((size) => {
-    const auto = buildSku(name, color, size)
-    const typed = skuEdit[size]
-    return {
-      size,
-      auto,
-      sku: typed !== undefined ? typed.toUpperCase().replace(/\s+/g, '') : auto,
-      variant: color.trim() ? `${color.trim()} / ${size}` : size,
-    }
-  })
+  const colorList = colors.length ? colors : ['']
+  const items = colorList.flatMap((color) =>
+    ordered.map((size) => {
+      const key = `${color}|${size}`
+      const auto = buildSku(name, color, size)
+      const typed = skuEdit[key]
+      return {
+        key,
+        color,
+        size,
+        auto,
+        sku: typed !== undefined ? typed.toUpperCase().replace(/\s+/g, '') : auto,
+        variant: color ? `${color} / ${size}` : size,
+        label: color ? `${color} · ${size}` : size,
+      }
+    }),
+  )
   const dups = items
     .filter((it, i) => PRODUCTS.some((p) => p.sku === it.sku) || items.findIndex((x) => x.sku === it.sku) !== i)
     .map((it) => it.sku)
@@ -49,6 +57,12 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
 
   function toggleSize(sz) {
     setSizes((l) => (l.includes(sz) ? l.filter((x) => x !== sz) : [...l, sz]))
+  }
+
+  function addColor() {
+    const c = colorIn.trim()
+    if (c && !colors.some((x) => x.toLowerCase() === c.toLowerCase())) setColors((l) => [...l, c])
+    setColorIn('')
   }
 
   function addCustom() {
@@ -61,7 +75,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
     onSave(
       items.map((it) => ({
         product: { sku: it.sku, name: name.trim(), variant: it.variant, base: owner ? base : 0, cost: owner ? cost : 0 },
-        qty: qty[it.size] ?? 0,
+        qty: qty[it.key] ?? 0,
       })),
     )
   }
@@ -95,9 +109,33 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
                 <label htmlFor="np-name">Tên sản phẩm</label>
                 <input id="np-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Áo thun Phở" />
               </div>
-              <div className="field">
-                <label htmlFor="np-color">Màu</label>
-                <input id="np-color" className="input" value={color} onChange={(e) => setColor(e.target.value)} placeholder="Đen" />
+            </div>
+
+            <div className="field">
+              <label htmlFor="np-color">Màu (một mẫu có thể nhiều màu, mỗi màu là một nhóm SKU)</label>
+              <div className="np-sizes">
+                {colors.map((c) => (
+                  <button key={c} type="button" className="np-chip" aria-pressed="true" aria-label={`Bỏ màu ${c}`} onClick={() => setColors((l) => l.filter((x) => x !== c))}>
+                    {c} ×
+                  </button>
+                ))}
+                <span className="np-custom">
+                  <input
+                    id="np-color"
+                    className="input"
+                    value={colorIn}
+                    placeholder="Đen"
+                    onChange={(e) => setColorIn(e.target.value)}
+                    onBlur={addColor}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addColor()
+                      }
+                    }}
+                  />
+                  <button type="button" className="btn btn-secondary" onClick={addColor}>Thêm màu</button>
+                </span>
               </div>
             </div>
 
@@ -131,20 +169,20 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
             <div className="field">
               <label id="np-sku-l">SKU sẽ tạo</label>
               {items.length === 0 ? (
-                <p className="hint">Chọn size, hệ thống tự đặt một mã SKU riêng cho từng size. Sửa tay được nếu hàng đã có mã.</p>
+                <p className="hint">Chọn size (và màu), hệ thống tự đặt một mã SKU riêng cho từng màu x size. Sửa tay được nếu hàng đã có mã.</p>
               ) : (
                 <div className="np-skus" role="group" aria-labelledby="np-sku-l">
                   {items.map((it) => (
-                    <div className="np-sku-row" key={it.size}>
-                      <span className="np-sku-size">{it.size}</span>
+                    <div className="np-sku-row" key={it.key}>
+                      <span className="np-sku-size">{it.label}</span>
                       <input
                         className="input mono"
-                        value={skuEdit[it.size] ?? it.auto}
-                        aria-label={`SKU size ${it.size}`}
-                        onChange={(e) => setSkuEdit((m) => ({ ...m, [it.size]: e.target.value }))}
+                        value={skuEdit[it.key] ?? it.auto}
+                        aria-label={`SKU ${it.label}`}
+                        onChange={(e) => setSkuEdit((m) => ({ ...m, [it.key]: e.target.value }))}
                       />
-                      {skuEdit[it.size] !== undefined && skuEdit[it.size] !== it.auto && (
-                        <button type="button" className="link-btn" onClick={() => setSkuEdit((m) => { const n = { ...m }; delete n[it.size]; return n })}>
+                      {skuEdit[it.key] !== undefined && skuEdit[it.key] !== it.auto && (
+                        <button type="button" className="link-btn" onClick={() => setSkuEdit((m) => { const n = { ...m }; delete n[it.key]; return n })}>
                           Về mã tự đặt
                         </button>
                       )}
@@ -197,20 +235,20 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
           <Reveal as="section" className="card">
             <header>
               <h2>Tồn kho tổng đầu kỳ</h2>
-              <span className="hint">Số lượng từng size đưa vào kho tổng. Để 0 nếu chưa nhập hàng.</span>
+              <span className="hint">Số lượng từng màu và size đưa vào kho tổng. Để 0 nếu chưa nhập hàng.</span>
             </header>
             {items.length === 0 ? (
-              <p className="hint">Chọn size ở trên để nhập số lượng từng size.</p>
+              <p className="hint">Chọn size ở trên để nhập số lượng.</p>
             ) : (
               <div className="np-stock">
                 {items.map((it) => (
-                  <div className="field" key={it.size}>
-                    <label htmlFor={`np-q-${it.size}`}>Size {it.size}</label>
+                  <div className="field" key={it.key}>
+                    <label htmlFor={`np-q-${it.key}`}>{it.label}</label>
                     <NumInput
-                      id={`np-q-${it.size}`}
+                      id={`np-q-${it.key}`}
                       className="input"
-                      value={qty[it.size] ?? 0}
-                      onCommit={(n) => setQty((q) => ({ ...q, [it.size]: n }))}
+                      value={qty[it.key] ?? 0}
+                      onCommit={(n) => setQty((q) => ({ ...q, [it.key]: n }))}
                     />
                   </div>
                 ))}
@@ -223,7 +261,7 @@ export default function NewProduct({ role, inline = false, onBack, onSave, toast
           <Reveal className="card np-preview">
             <p className="lbl">Xem trước</p>
             <b className="np-p-name">{name || 'Tên sản phẩm'}</b>
-            <span className="np-p-var">{color || 'Màu'}</span>
+            <span className="np-p-var">{colors.join(' + ') || 'Màu'}</span>
             <ul className="np-p-skus">
               {items.length === 0 && <li>Chưa chọn size</li>}
               {items.map((it) => (
