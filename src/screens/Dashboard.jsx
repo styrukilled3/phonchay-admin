@@ -57,7 +57,7 @@ export default function Dashboard({ range, setRange }) {
             </div>
             <div className="kitem">
               <span className="lbl">Margin</span>
-              <span className="val">
+              <span className={`val${cur.net > 0 ? (cur.margin >= 0.25 ? ' is-up' : ' is-down') : ''}`}>
                 <CountUp value={cur.margin} format={pct} />
               </span>
               <Delta now={cur.margin} before={old?.margin} points />

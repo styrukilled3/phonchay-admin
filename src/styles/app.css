@@ -2668,3 +2668,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 button.day { font: inherit; color: inherit; text-align: left; cursor: pointer; }
 button.day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Margin: xanh từ 25% trở lên, đỏ dưới 25% */
+.kstrip .kitem .val.is-up { color: var(--up); }
+.kstrip .kitem .val.is-down { color: var(--down); }
