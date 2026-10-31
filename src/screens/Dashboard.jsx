@@ -1,4 +1,4 @@
-import { CHANNELS, DATES, DAYS, LINES } from '../data/seed.js'
+import { CHANNELS, DATES, LINES } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
 import { compact, money, pct } from '../lib/format.js'
 import { Delta, Tag } from '../components/bits.jsx'
@@ -26,7 +26,7 @@ export default function Dashboard({ range, setRange }) {
         <div>
           <h2>Doanh thu</h2>
           <span className="hint">
-            Dữ liệu mẫu {DAYS} ngày, {LINES.length} dòng bán.
+            {LINES.length} dòng bán đã gửi.
           </span>
         </div>
         <div className="tabs" role="group" aria-label="Khoảng thời gian">

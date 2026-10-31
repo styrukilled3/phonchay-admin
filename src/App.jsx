@@ -29,6 +29,7 @@ import RequestStock from './screens/RequestStock.jsx'
 import NewProduct from './screens/NewProduct.jsx'
 import StockBar from './components/StockBar.jsx'
 import { initialLots, putBack, takeFifo, totalFor } from './lib/lots.js'
+import { clearSaved, loadSaved, save } from './lib/persist.js'
 
 const SCREENS = [
   { id: 'entry', key: '01', label: 'Kênh bán', short: 'Kênh', title: 'ZONE SELL', roles: ['staff', 'owner'] },
@@ -42,13 +43,8 @@ const SCREENS = [
 const TODAY = DATES[DATES.length - 1]
 const FIRST_CH = CHANNELS[0].id
 
-// Mở app ở trạng thái đang làm việc thật, không phải vỏ rỗng
-const INITIAL_DRAFTS = {
-  [`${TODAY}|${FIRST_CH}`]: [
-    { sku: 'PC-TEE-PHO-BLK-M', qty: 4, price: priceOf('PC-TEE-PHO-BLK-M', FIRST_CH), override: false },
-    { sku: 'PC-CAP-SEN-BLK-OS', qty: 2, price: priceOf('PC-CAP-SEN-BLK-OS', FIRST_CH), override: false },
-  ],
-}
+// Nạp dữ liệu đã lưu (nếu có) trước khi dựng state
+const SAVED = loadSaved()
 
 function RoleSwitch({ role, setRole }) {
   return (
@@ -71,15 +67,15 @@ export default function App() {
   const [openCh, setOpenCh] = useState(null)
   const [date, setDate] = useState(TODAY)
   const [range, setRange] = useState(30)
-  const [drafts, setDrafts] = useState(INITIAL_DRAFTS)
-  const [sent, setSent] = useState({})
-  const [stock, setStock] = useState(initialStock)
-  const [wh, setWh] = useState(initialWarehouse)
-  const [lots, setLots] = useState(() => initialLots(initialStock()))
-  const [, setPriceVer] = useState(0) // bump khi owner sửa giá để vẽ lại
-  const [requests, setRequests] = useState(initialRequests)
-  const [sentRows, setSentRows] = useState({}) // key ngày|kênh -> dòng đã gửi, để tính lại tồn khi gửi lại
-  const [receipts, setReceipts] = useState(RECEIPTS_SEED)
+  const [drafts, setDrafts] = useState(SAVED?.drafts ?? {})
+  const [sent, setSent] = useState(SAVED?.sent ?? {})
+  const [stock, setStock] = useState(SAVED?.stock ?? initialStock)
+  const [wh, setWh] = useState(SAVED?.wh ?? initialWarehouse)
+  const [lots, setLots] = useState(() => SAVED?.lots ?? initialLots(initialStock()))
+  const [priceVer, setPriceVer] = useState(0) // bump khi owner sửa giá để vẽ lại
+  const [requests, setRequests] = useState(SAVED?.requests ?? initialRequests)
+  const [sentRows, setSentRows] = useState(SAVED?.sentRows ?? {}) // key ngày|kênh -> dòng đã gửi, để tính lại tồn khi gửi lại
+  const [receipts, setReceipts] = useState(SAVED?.receipts ?? RECEIPTS_SEED)
   // sub: màn con. 'restock' | 'newproduct' (trong Kho tổng), 'request' (trong trang kênh); newFrom nhớ để quay lại đúng chỗ
   const [sub, setSub] = useState(null)
   const [newFrom, setNewFrom] = useState(null)
@@ -107,6 +103,17 @@ export default function App() {
     document.addEventListener('pointermove', move, { passive: true })
     return () => document.removeEventListener('pointermove', move)
   }, [])
+
+  // Mọi thay đổi (kể cả sửa giá, công thức kênh qua priceVer) ghi xuống trình duyệt
+  useEffect(() => {
+    save({ wh, stock, lots, requests, receipts, sentRows, sent, drafts })
+  }, [wh, stock, lots, requests, receipts, sentRows, sent, drafts, priceVer])
+
+  function resetAll() {
+    if (!window.confirm('Xóa toàn bộ sản phẩm, tồn kho, doanh số đã nhập và làm lại từ đầu?')) return
+    clearSaved()
+    window.location.reload()
+  }
 
   const toast = useCallback((message, undo) => {
     setToastState({ message, undo })
@@ -153,7 +160,7 @@ export default function App() {
       })
       return next
     })
-    const id = `PN-${String(Number(receipts[0].id.slice(3)) + 1).padStart(4, '0')}`
+    const id = `PN-${String(Number(receipts[0]?.id.slice(3) ?? 0) + 1).padStart(4, '0')}`
     setReceipts((r) => [{ id, date: d, qty: totalQty, total: totalCost }, ...r])
     setSub(null)
     window.scrollTo({ top: 0 })
@@ -357,8 +364,13 @@ export default function App() {
             <p className="lbl">Xem với vai trò</p>
             <RoleSwitch role={role} setRole={setRole} />
             <p className="side-note">
-              Công tắc chỉ dùng cho bản demo. App thật chặn quyền ở database.
+              Công tắc chỉ dùng khi thử. App thật chặn quyền ở database. Số nhập lưu trong trình duyệt này.
             </p>
+            {role === 'owner' && (
+              <button type="button" className="link-btn" onClick={resetAll}>
+                Xóa toàn bộ dữ liệu
+              </button>
+            )}
           </div>
         </aside>
 

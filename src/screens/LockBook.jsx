@@ -1,22 +1,10 @@
 import { DATES, isLocked } from '../data/seed.js'
 import { aggOf } from '../lib/calc.js'
-import { compact, dm, dmy } from '../lib/format.js'
+import { compact, dm } from '../lib/format.js'
 import Reveal from '../components/Reveal.jsx'
 
-const LOG = [
-  ['27/10 16:42', 'Trang (staff)', 'Sửa số lượng', 'PC-TEE-PHO-BLK-M · 808', '3', '4'],
-  ['27/10 16:40', 'Trang (staff)', 'Thêm dòng', 'PC-CAP-SEN-BLK-OS · 808', '—', '2 × 189.000 ₫'],
-  ['27/10 09:15', 'STY (owner)', 'Chốt ngày', dmy(DATES[DATES.length - 7]), 'đang mở', 'đã chốt'],
-  [
-    '26/10 20:03',
-    'Khoa (staff)',
-    'Ghi đè giá',
-    'PC-HOO-UOM-CRM-XL · HAIPHONG',
-    '549.000 ₫',
-    '470.000 ₫ (lý do: khách quen)',
-  ],
-  ['26/10 19:58', 'Khoa (staff)', 'Gửi ngày', '26/10 · SHOPPE', 'nháp', 'đã gửi'],
-]
+// Chưa có audit log thật (cần database). Bảng để trống thay vì số giả.
+const LOG = []
 
 export default function LockBook() {
   return (
@@ -68,6 +56,11 @@ export default function LockBook() {
                   <td>{r[5]}</td>
                 </tr>
               ))}
+              {LOG.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="muted">Chưa có thao tác nào. Audit log thật cần database, bản này chưa ghi.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
